@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import { Room, RoomStatus } from '@/types/hotel';
 import { BedDouble, Wrench, Sparkles, Clock, Check } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface RoomStatusGridProps {
   rooms: Room[];
@@ -16,6 +17,8 @@ const statusConfig: Record<RoomStatus, { label: string; color: string; icon: Rea
 };
 
 export function RoomStatusGrid({ rooms }: RoomStatusGridProps) {
+  const { formatPrice } = useCurrency();
+  
   const statusCounts = rooms.reduce((acc, room) => {
     acc[room.status] = (acc[room.status] || 0) + 1;
     return acc;
@@ -62,10 +65,10 @@ export function RoomStatusGrid({ rooms }: RoomStatusGridProps) {
                   </span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-center">
+              <TooltipContent side="top" className="text-center bg-popover border border-border z-50">
                 <p className="font-semibold">Room {room.number}</p>
                 <p className="text-sm text-muted-foreground capitalize">{room.type} - {room.status}</p>
-                <p className="text-sm font-medium">${room.pricePerNight}/night</p>
+                <p className="text-sm font-medium">{formatPrice(room.pricePerNight)}/night</p>
               </TooltipContent>
             </Tooltip>
           );

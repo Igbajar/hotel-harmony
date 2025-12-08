@@ -5,19 +5,17 @@ import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { UpcomingReservations } from '@/components/dashboard/UpcomingReservations';
 import { OccupancyChart } from '@/components/dashboard/OccupancyChart';
 import { mockRooms, mockReservations, mockDashboardStats } from '@/data/mockData';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import {
-  BedDouble,
   DoorOpen,
   DoorClosed,
-  TrendingUp,
-  CalendarClock,
   DollarSign,
-  Users,
   Percent,
 } from 'lucide-react';
 
 export default function Dashboard() {
   const stats = mockDashboardStats;
+  const { formatPrice } = useCurrency();
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -45,7 +43,7 @@ export default function Dashboard() {
           />
           <StatsCard
             title="Today's Revenue"
-            value={`$${stats.revenue.toLocaleString()}`}
+            value={formatPrice(stats.revenue)}
             subtitle="From all sources"
             icon={DollarSign}
             trend={{ value: 12.5, isPositive: true }}

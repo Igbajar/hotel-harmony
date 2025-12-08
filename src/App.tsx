@@ -3,7 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { MainLayout } from "@/components/layout/MainLayout";
+import Dashboard from "./pages/Dashboard";
+import Rooms from "./pages/Rooms";
+import Reservations from "./pages/Reservations";
+import Guests from "./pages/Guests";
+import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,8 +20,24 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/rooms" element={<Rooms />} />
+            <Route path="/reservations" element={<Reservations />} />
+            <Route path="/guests" element={<Guests />} />
+            <Route path="/billing" element={<ComingSoon />} />
+            <Route path="/housekeeping" element={<ComingSoon />} />
+            <Route path="/restaurant" element={<ComingSoon />} />
+            <Route path="/room-service" element={<ComingSoon />} />
+            <Route path="/events" element={<ComingSoon />} />
+            <Route path="/staff" element={<ComingSoon />} />
+            <Route path="/online-booking" element={<ComingSoon />} />
+            <Route path="/security" element={<ComingSoon />} />
+            <Route path="/mobile-app" element={<ComingSoon />} />
+            <Route path="/marketing" element={<ComingSoon />} />
+            <Route path="/reports" element={<ComingSoon />} />
+            <Route path="/settings" element={<ComingSoon />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

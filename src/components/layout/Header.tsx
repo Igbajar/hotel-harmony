@@ -1,4 +1,4 @@
-import { Bell, Search, User, Plus } from 'lucide-react';
+import { Bell, Search, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useCurrency, currencies } from '@/contexts/CurrencyContext';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   title: string;
@@ -18,6 +20,8 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const { currency, setCurrency } = useCurrency();
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
       <div>
@@ -35,6 +39,37 @@ export function Header({ title, subtitle }: HeaderProps) {
           />
         </div>
 
+        {/* Currency Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2 min-w-[100px]">
+              <span className="font-semibold">{currency.symbol}</span>
+              <span className="hidden sm:inline">{currency.code}</span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
+            <DropdownMenuLabel>Select Currency</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {currencies.map((curr) => (
+              <DropdownMenuItem
+                key={curr.code}
+                onClick={() => setCurrency(curr)}
+                className={cn(
+                  'flex items-center justify-between cursor-pointer',
+                  currency.code === curr.code && 'bg-accent/10'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold w-8">{curr.symbol}</span>
+                  <span>{curr.name}</span>
+                </div>
+                <span className="text-muted-foreground text-sm">{curr.code}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Quick Actions */}
         <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="h-4 w-4" />
@@ -51,7 +86,7 @@ export function Header({ title, subtitle }: HeaderProps) {
               </Badge>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align="end" className="w-80 bg-popover border border-border shadow-lg z-50">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
@@ -86,7 +121,7 @@ export function Header({ title, subtitle }: HeaderProps) {
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>

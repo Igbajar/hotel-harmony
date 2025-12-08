@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   Select,
   SelectContent,
@@ -31,7 +32,6 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
-  Filter,
   MoreHorizontal,
   Check,
   X,
@@ -120,7 +120,7 @@ function CalendarView() {
                   {room.type}
                 </Badge>
               </div>
-              {weekDays.map((day, dayIndex) => {
+              {weekDays.map((day) => {
                 const reservation = reservationsWithDetails.find(
                   (res) =>
                     res.room?.id === room.id &&
@@ -161,6 +161,7 @@ function CalendarView() {
 
 function ListView() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { formatPrice } = useCurrency();
 
   const reservationsWithDetails = mockReservations
     .map(res => ({
@@ -182,7 +183,7 @@ function ListView() {
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover border border-border shadow-lg z-50">
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="confirmed">Confirmed</SelectItem>
@@ -245,9 +246,9 @@ function ListView() {
               </TableCell>
               <TableCell>
                 <div>
-                  <p className="font-medium">${reservation.totalAmount}</p>
+                  <p className="font-medium">{formatPrice(reservation.totalAmount)}</p>
                   <p className="text-sm text-muted-foreground">
-                    {reservation.paidAmount === reservation.totalAmount ? 'Paid' : `$${reservation.paidAmount} paid`}
+                    {reservation.paidAmount === reservation.totalAmount ? 'Paid' : `${formatPrice(reservation.paidAmount)} paid`}
                   </p>
                 </div>
               </TableCell>
@@ -263,7 +264,7 @@ function ListView() {
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="bg-popover border border-border shadow-lg z-50">
                     <DropdownMenuItem>
                       <Eye className="mr-2 h-4 w-4" /> View Details
                     </DropdownMenuItem>

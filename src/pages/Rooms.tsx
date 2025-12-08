@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { mockRooms } from '@/data/mockData';
-import { Room, RoomStatus, RoomType } from '@/types/hotel';
+import { Room, RoomStatus } from '@/types/hotel';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   Select,
   SelectContent,
@@ -28,7 +29,6 @@ import {
   Check,
   Search,
   Plus,
-  Filter,
   Grid3X3,
   List,
   Wifi,
@@ -38,7 +38,6 @@ import {
   Bath,
   MountainSnow,
   Users,
-  DollarSign,
   MoreVertical,
 } from 'lucide-react';
 import {
@@ -68,6 +67,7 @@ const amenityIcons: Record<string, React.ElementType> = {
 function RoomCard({ room }: { room: Room }) {
   const config = statusConfig[room.status];
   const StatusIcon = config.icon;
+  const { formatPrice } = useCurrency();
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 animate-fade-in overflow-hidden">
@@ -93,7 +93,7 @@ function RoomCard({ room }: { room: Room }) {
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-popover border border-border shadow-lg z-50">
               <DropdownMenuItem>View Details</DropdownMenuItem>
               <DropdownMenuItem>Edit Room</DropdownMenuItem>
               <DropdownMenuItem>Change Status</DropdownMenuItem>
@@ -136,8 +136,7 @@ function RoomCard({ room }: { room: Room }) {
 
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1 text-lg font-bold">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            {room.pricePerNight}
+            {formatPrice(room.pricePerNight)}
             <span className="text-sm font-normal text-muted-foreground">/night</span>
           </div>
           <Button size="sm" variant="outline">
@@ -209,7 +208,7 @@ export default function Rooms() {
             <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Room Type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover border border-border shadow-lg z-50">
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="single">Single</SelectItem>
               <SelectItem value="double">Double</SelectItem>

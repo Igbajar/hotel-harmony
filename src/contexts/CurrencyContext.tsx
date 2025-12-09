@@ -4,7 +4,7 @@ export interface Currency {
   code: string;
   symbol: string;
   name: string;
-  rate: number; // Exchange rate relative to USD
+  rate: number; // Default exchange rate relative to USD
 }
 
 export const currencies: Currency[] = [
@@ -21,18 +21,47 @@ export const currencies: Currency[] = [
 
 interface CurrencyContextType {
   currency: Currency;
+  baseCurrency: Currency;
+  customRates: Record<string, number>;
+  lastUpdated: string | null;
   setCurrency: (currency: Currency) => void;
+  setBaseCurrency: (currency: Currency) => void;
+  updateCustomRate: (code: string, rate: number) => void;
+  resetRates: () => void;
   formatPrice: (amountInUSD: number) => string;
   convertPrice: (amountInUSD: number) => number;
+  getRate: (code: string) => number;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrency] = useState<Currency>(currencies[0]); // Default to USD
+  const [currency, setCurrency] = useState<Currency>(currencies[0]); // Display currency
+  const [baseCurrency, setBaseCurrency] = useState<Currency>(currencies[0]); // Base currency (USD default)
+  const [customRates, setCustomRates] = useState<Record<string, number>>({});
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  const getRate = (code: string): number => {
+    // Return custom rate if set, otherwise default rate
+    if (customRates[code] !== undefined) {
+      return customRates[code];
+    }
+    return currencies.find(c => c.code === code)?.rate ?? 1;
+  };
+
+  const updateCustomRate = (code: string, rate: number) => {
+    setCustomRates(prev => ({ ...prev, [code]: rate }));
+    setLastUpdated(new Date().toISOString());
+  };
+
+  const resetRates = () => {
+    setCustomRates({});
+    setLastUpdated(new Date().toISOString());
+  };
 
   const convertPrice = (amountInUSD: number): number => {
-    return amountInUSD * currency.rate;
+    const rate = getRate(currency.code);
+    return amountInUSD * rate;
   };
 
   const formatPrice = (amountInUSD: number): string => {
@@ -48,7 +77,19 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, formatPrice, convertPrice }}>
+    <CurrencyContext.Provider value={{ 
+      currency, 
+      baseCurrency,
+      customRates,
+      lastUpdated,
+      setCurrency, 
+      setBaseCurrency,
+      updateCustomRate,
+      resetRates,
+      formatPrice, 
+      convertPrice,
+      getRate
+    }}>
       {children}
     </CurrencyContext.Provider>
   );

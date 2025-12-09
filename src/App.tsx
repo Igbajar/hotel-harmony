@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Rooms from "./pages/Rooms";
 import Reservations from "./pages/Reservations";
 import Guests from "./pages/Guests";
+import Settings from "./pages/Settings";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 
@@ -38,7 +39,7 @@ const App = () => (
               <Route path="/mobile-app" element={<ComingSoon />} />
               <Route path="/marketing" element={<ComingSoon />} />
               <Route path="/reports" element={<ComingSoon />} />
-              <Route path="/settings" element={<ComingSoon />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

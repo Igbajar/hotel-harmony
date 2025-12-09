@@ -2,6 +2,8 @@ export type RoomStatus = 'available' | 'occupied' | 'reserved' | 'maintenance' |
 export type RoomType = 'single' | 'double' | 'suite' | 'deluxe' | 'presidential';
 export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'mobile';
 export type ReservationStatus = 'pending' | 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
+export type RoomServiceOrderStatus = 'pending' | 'preparing' | 'delivering' | 'delivered' | 'cancelled';
+export type MenuCategory = 'breakfast' | 'lunch' | 'dinner' | 'snacks' | 'beverages' | 'desserts';
 
 export interface Room {
   id: string;
@@ -57,4 +59,40 @@ export interface DashboardStats {
   revenue: number;
   occupancyRate: number;
   pendingReservations: number;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  category: MenuCategory;
+  price: number;
+  image?: string;
+  available: boolean;
+  preparationTime: number; // in minutes
+  dietary?: ('vegetarian' | 'vegan' | 'gluten-free' | 'halal')[];
+}
+
+export interface RoomServiceOrderItem {
+  menuItemId: string;
+  menuItem?: MenuItem;
+  quantity: number;
+  specialInstructions?: string;
+  subtotal: number;
+}
+
+export interface RoomServiceOrder {
+  id: string;
+  roomId: string;
+  room?: Room;
+  guestId: string;
+  guest?: Guest;
+  items: RoomServiceOrderItem[];
+  status: RoomServiceOrderStatus;
+  totalAmount: number;
+  deliveryFee: number;
+  specialInstructions?: string;
+  estimatedDelivery?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -1,4 +1,4 @@
-import { Room, Guest, Reservation, DashboardStats } from '@/types/hotel';
+import { Room, Guest, Reservation, DashboardStats, MenuItem, RoomServiceOrder } from '@/types/hotel';
 
 export const mockRooms: Room[] = [
   { id: '1', number: '101', floor: 1, type: 'single', status: 'available', pricePerNight: 150, maxOccupancy: 1, amenities: ['WiFi', 'TV', 'AC'] },
@@ -43,3 +43,105 @@ export const mockDashboardStats: DashboardStats = {
   occupancyRate: 41.7,
   pendingReservations: 4,
 };
+
+export const mockMenuItems: MenuItem[] = [
+  // Breakfast
+  { id: 'm1', name: 'Continental Breakfast', description: 'Fresh croissants, pastries, fruits, yogurt, and artisanal cheeses', category: 'breakfast', price: 28, available: true, preparationTime: 15, dietary: ['vegetarian'] },
+  { id: 'm2', name: 'Full English Breakfast', description: 'Eggs, bacon, sausages, beans, mushrooms, tomatoes, and toast', category: 'breakfast', price: 32, available: true, preparationTime: 20 },
+  { id: 'm3', name: 'Avocado Toast', description: 'Smashed avocado on sourdough with poached eggs and microgreens', category: 'breakfast', price: 22, available: true, preparationTime: 12, dietary: ['vegetarian'] },
+  { id: 'm4', name: 'Pancake Stack', description: 'Fluffy buttermilk pancakes with maple syrup and fresh berries', category: 'breakfast', price: 18, available: true, preparationTime: 15, dietary: ['vegetarian'] },
+  
+  // Lunch
+  { id: 'm5', name: 'Caesar Salad', description: 'Crisp romaine, parmesan, croutons with grilled chicken', category: 'lunch', price: 24, available: true, preparationTime: 12 },
+  { id: 'm6', name: 'Club Sandwich', description: 'Triple-decker with turkey, bacon, lettuce, tomato, and mayo', category: 'lunch', price: 26, available: true, preparationTime: 15 },
+  { id: 'm7', name: 'Beef Burger', description: 'Premium Angus patty with cheddar, caramelized onions, and truffle fries', category: 'lunch', price: 34, available: true, preparationTime: 20 },
+  { id: 'm8', name: 'Mediterranean Bowl', description: 'Quinoa, falafel, hummus, tabbouleh, and tahini dressing', category: 'lunch', price: 26, available: true, preparationTime: 15, dietary: ['vegetarian', 'vegan'] },
+  
+  // Dinner
+  { id: 'm9', name: 'Grilled Salmon', description: 'Atlantic salmon with asparagus, lemon butter sauce, and roasted potatoes', category: 'dinner', price: 48, available: true, preparationTime: 25 },
+  { id: 'm10', name: 'Ribeye Steak', description: '12oz prime ribeye with garlic mashed potatoes and seasonal vegetables', category: 'dinner', price: 62, available: true, preparationTime: 30 },
+  { id: 'm11', name: 'Lobster Thermidor', description: 'Classic preparation with creamy mustard sauce and gratin topping', category: 'dinner', price: 78, available: true, preparationTime: 35 },
+  { id: 'm12', name: 'Vegetable Risotto', description: 'Arborio rice with seasonal vegetables, truffle oil, and parmesan', category: 'dinner', price: 36, available: true, preparationTime: 25, dietary: ['vegetarian', 'gluten-free'] },
+  
+  // Snacks
+  { id: 'm13', name: 'Cheese Platter', description: 'Selection of artisanal cheeses with crackers and grapes', category: 'snacks', price: 28, available: true, preparationTime: 10, dietary: ['vegetarian', 'gluten-free'] },
+  { id: 'm14', name: 'Chicken Wings', description: 'Crispy wings with buffalo sauce and blue cheese dip', category: 'snacks', price: 18, available: true, preparationTime: 15 },
+  { id: 'm15', name: 'Nachos Supreme', description: 'Loaded with cheese, jalapeños, salsa, guacamole, and sour cream', category: 'snacks', price: 22, available: true, preparationTime: 12, dietary: ['vegetarian'] },
+  { id: 'm16', name: 'Bruschetta', description: 'Toasted ciabatta with tomato, basil, and balsamic glaze', category: 'snacks', price: 16, available: true, preparationTime: 10, dietary: ['vegetarian', 'vegan'] },
+  
+  // Beverages
+  { id: 'm17', name: 'Fresh Orange Juice', description: 'Freshly squeezed Valencia oranges', category: 'beverages', price: 8, available: true, preparationTime: 5, dietary: ['vegan', 'gluten-free'] },
+  { id: 'm18', name: 'Premium Coffee', description: 'Espresso, Americano, Cappuccino, or Latte', category: 'beverages', price: 6, available: true, preparationTime: 5, dietary: ['vegetarian'] },
+  { id: 'm19', name: 'Craft Cocktail', description: 'Signature hotel cocktail with premium spirits', category: 'beverages', price: 18, available: true, preparationTime: 8 },
+  { id: 'm20', name: 'Wine by the Glass', description: 'Selection of red, white, or rosé wines', category: 'beverages', price: 14, available: true, preparationTime: 3 },
+  
+  // Desserts
+  { id: 'm21', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with molten center and vanilla ice cream', category: 'desserts', price: 16, available: true, preparationTime: 15, dietary: ['vegetarian'] },
+  { id: 'm22', name: 'Tiramisu', description: 'Classic Italian dessert with mascarpone and espresso', category: 'desserts', price: 14, available: true, preparationTime: 5, dietary: ['vegetarian'] },
+  { id: 'm23', name: 'Fresh Fruit Platter', description: 'Seasonal tropical fruits with honey yogurt dip', category: 'desserts', price: 18, available: true, preparationTime: 10, dietary: ['vegetarian', 'vegan', 'gluten-free'] },
+  { id: 'm24', name: 'Crème Brûlée', description: 'Classic vanilla custard with caramelized sugar top', category: 'desserts', price: 14, available: true, preparationTime: 5, dietary: ['vegetarian', 'gluten-free'] },
+];
+
+export const mockRoomServiceOrders: RoomServiceOrder[] = [
+  {
+    id: 'rs1',
+    roomId: '2',
+    guestId: '1',
+    items: [
+      { menuItemId: 'm2', quantity: 2, subtotal: 64 },
+      { menuItemId: 'm18', quantity: 2, subtotal: 12 },
+    ],
+    status: 'delivering',
+    totalAmount: 81,
+    deliveryFee: 5,
+    estimatedDelivery: new Date(Date.now() + 10 * 60 * 1000),
+    createdAt: new Date(Date.now() - 25 * 60 * 1000),
+    updatedAt: new Date(Date.now() - 5 * 60 * 1000),
+  },
+  {
+    id: 'rs2',
+    roomId: '5',
+    guestId: '3',
+    items: [
+      { menuItemId: 'm10', quantity: 1, subtotal: 62 },
+      { menuItemId: 'm9', quantity: 1, subtotal: 48 },
+      { menuItemId: 'm20', quantity: 2, subtotal: 28 },
+      { menuItemId: 'm21', quantity: 2, subtotal: 32 },
+    ],
+    status: 'preparing',
+    totalAmount: 175,
+    deliveryFee: 5,
+    specialInstructions: 'Steak medium-rare, allergic to nuts',
+    estimatedDelivery: new Date(Date.now() + 25 * 60 * 1000),
+    createdAt: new Date(Date.now() - 10 * 60 * 1000),
+    updatedAt: new Date(Date.now() - 8 * 60 * 1000),
+  },
+  {
+    id: 'rs3',
+    roomId: '10',
+    guestId: '5',
+    items: [
+      { menuItemId: 'm13', quantity: 1, subtotal: 28 },
+      { menuItemId: 'm19', quantity: 2, subtotal: 36 },
+    ],
+    status: 'pending',
+    totalAmount: 69,
+    deliveryFee: 5,
+    createdAt: new Date(Date.now() - 2 * 60 * 1000),
+    updatedAt: new Date(Date.now() - 2 * 60 * 1000),
+  },
+  {
+    id: 'rs4',
+    roomId: '12',
+    guestId: '6',
+    items: [
+      { menuItemId: 'm1', quantity: 2, subtotal: 56 },
+      { menuItemId: 'm17', quantity: 2, subtotal: 16 },
+    ],
+    status: 'delivered',
+    totalAmount: 77,
+    deliveryFee: 5,
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    updatedAt: new Date(Date.now() - 90 * 60 * 1000),
+  },
+];

@@ -19,15 +19,19 @@ export const currencies: Currency[] = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', rate: 1.36 },
 ];
 
+type RateMode = 'automatic' | 'manual';
+
 interface CurrencyContextType {
   currency: Currency;
   baseCurrency: Currency;
   customRates: Record<string, number>;
   lastUpdated: string | null;
+  rateMode: RateMode;
   setCurrency: (currency: Currency) => void;
   setBaseCurrency: (currency: Currency) => void;
   updateCustomRate: (code: string, rate: number) => void;
   resetRates: () => void;
+  setRateMode: (mode: RateMode) => void;
   formatPrice: (amountInUSD: number) => string;
   convertPrice: (amountInUSD: number) => number;
   getRate: (code: string) => number;
@@ -40,12 +44,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [baseCurrency, setBaseCurrency] = useState<Currency>(currencies[0]); // Base currency (USD default)
   const [customRates, setCustomRates] = useState<Record<string, number>>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [rateMode, setRateMode] = useState<RateMode>('automatic');
 
   const getRate = (code: string): number => {
-    // Return custom rate if set, otherwise default rate
-    if (customRates[code] !== undefined) {
+    // In manual mode, use custom rate if set
+    if (rateMode === 'manual' && customRates[code] !== undefined) {
       return customRates[code];
     }
+    // In automatic mode, always use default rates
     return currencies.find(c => c.code === code)?.rate ?? 1;
   };
 
@@ -82,10 +88,12 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       baseCurrency,
       customRates,
       lastUpdated,
+      rateMode,
       setCurrency, 
       setBaseCurrency,
       updateCustomRate,
       resetRates,
+      setRateMode,
       formatPrice, 
       convertPrice,
       getRate

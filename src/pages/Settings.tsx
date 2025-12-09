@@ -6,13 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { RefreshCw, Save, Settings as SettingsIcon } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { RefreshCw, Save, Settings as SettingsIcon, Zap, PenLine } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function Settings() {
-  const { currency, baseCurrency, customRates, setBaseCurrency, updateCustomRate, resetRates, lastUpdated } = useCurrency();
+  const { currency, baseCurrency, customRates, rateMode, setBaseCurrency, updateCustomRate, resetRates, setRateMode, lastUpdated } = useCurrency();
   const [editingRates, setEditingRates] = useState<Record<string, string>>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRateModeChange = (checked: boolean) => {
+    const newMode = checked ? 'manual' : 'automatic';
+    setRateMode(newMode);
+    toast({
+      title: `${newMode === 'manual' ? 'Manual' : 'Automatic'} mode enabled`,
+      description: newMode === 'manual' 
+        ? 'You can now set custom exchange rates' 
+        : 'Using default exchange rates',
+    });
+  };
 
   const handleRateChange = (code: string, value: string) => {
     setEditingRates(prev => ({ ...prev, [code]: value }));
@@ -83,6 +95,49 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Rate Mode Toggle */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Exchange Rate Mode</CardTitle>
+          <CardDescription>
+            Choose whether to use automatic default rates or manually set custom exchange rates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 rounded-lg border border-border">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-lg ${rateMode === 'automatic' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Automatic Rates</p>
+                <p className="text-sm text-muted-foreground">Use default exchange rates</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Switch 
+                checked={rateMode === 'manual'} 
+                onCheckedChange={handleRateModeChange}
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-lg ${rateMode === 'manual' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                <PenLine className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Manual Rates</p>
+                <p className="text-sm text-muted-foreground">Set custom exchange rates</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            {rateMode === 'automatic' 
+              ? 'Currently using default exchange rates. Custom rates will be ignored.' 
+              : 'Custom rates will be applied. Edit rates below to override defaults.'}
+          </p>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Base Currency Selection */}
         <Card>
@@ -129,7 +184,7 @@ export default function Settings() {
           <CardHeader>
             <CardTitle>Exchange Rate Updates</CardTitle>
             <CardDescription>
-              Refresh exchange rates or reset to default values.
+              {rateMode === 'automatic' ? 'Rates are managed automatically.' : 'Refresh or reset your custom exchange rates.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -143,7 +198,7 @@ export default function Settings() {
               <Separator />
               <Button 
                 onClick={handleRefreshRates} 
-                disabled={isRefreshing}
+                disabled={isRefreshing || rateMode === 'automatic'}
                 className="w-full"
                 variant="outline"
               >
@@ -154,8 +209,9 @@ export default function Settings() {
 
             <div className="rounded-lg bg-muted/50 p-4">
               <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> In production, this would fetch live exchange rates from a financial API.
-                Currently using mock default rates.
+                {rateMode === 'automatic' 
+                  ? 'Automatic mode is active. Switch to manual mode to customize rates.'
+                  : 'Click reset to restore all rates to their default values.'}
               </p>
             </div>
           </CardContent>
@@ -163,11 +219,20 @@ export default function Settings() {
       </div>
 
       {/* Custom Exchange Rates */}
-      <Card>
+      <Card className={rateMode === 'automatic' ? 'opacity-60' : ''}>
         <CardHeader>
-          <CardTitle>Custom Exchange Rates</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Custom Exchange Rates
+            {rateMode === 'automatic' && (
+              <span className="text-xs font-normal bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                Manual mode required
+              </span>
+            )}
+          </CardTitle>
           <CardDescription>
-            Set custom exchange rates relative to USD. These rates will be used for price conversions throughout the system.
+            {rateMode === 'manual' 
+              ? 'Set custom exchange rates relative to USD. These rates will be used for price conversions throughout the system.'
+              : 'Switch to manual mode to customize exchange rates.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -181,7 +246,7 @@ export default function Settings() {
                 <div
                   key={c.code}
                   className={`rounded-lg border p-4 space-y-3 transition-colors ${
-                    hasCustomRate ? 'border-primary/50 bg-primary/5' : 'border-border'
+                    hasCustomRate && rateMode === 'manual' ? 'border-primary/50 bg-primary/5' : 'border-border'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -189,7 +254,7 @@ export default function Settings() {
                       <span className="text-lg font-mono font-semibold text-primary">{c.symbol}</span>
                       <span className="font-medium">{c.code}</span>
                     </div>
-                    {hasCustomRate && (
+                    {hasCustomRate && rateMode === 'manual' && (
                       <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                         Custom
                       </span>
@@ -210,12 +275,13 @@ export default function Settings() {
                         onChange={(e) => handleRateChange(c.code, e.target.value)}
                         className="font-mono"
                         placeholder="Enter rate"
+                        disabled={rateMode === 'automatic'}
                       />
                     </div>
                     <Button
                       size="sm"
                       onClick={() => saveRate(c.code)}
-                      disabled={!isEditing}
+                      disabled={!isEditing || rateMode === 'automatic'}
                       variant={isEditing ? "default" : "outline"}
                     >
                       <Save className="h-4 w-4" />

@@ -4,6 +4,10 @@ import { RoomStatusGrid } from '@/components/dashboard/RoomStatusGrid';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { UpcomingReservations } from '@/components/dashboard/UpcomingReservations';
 import { OccupancyChart } from '@/components/dashboard/OccupancyChart';
+import { RevenueChart } from '@/components/dashboard/RevenueChart';
+import { RoomTypeChart } from '@/components/dashboard/RoomTypeChart';
+import { GuestInsights } from '@/components/dashboard/GuestInsights';
+import { QuickActions } from '@/components/dashboard/QuickActions';
 import { mockRooms, mockReservations, mockDashboardStats } from '@/data/mockData';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import {
@@ -11,6 +15,8 @@ import {
   DoorClosed,
   DollarSign,
   Percent,
+  Users,
+  BedDouble,
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -32,7 +38,7 @@ export default function Dashboard() {
       
       <div className="p-6 space-y-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           <StatsCard
             title="Occupancy Rate"
             value={`${stats.occupancyRate}%`}
@@ -61,19 +67,40 @@ export default function Dashboard() {
             subtitle="All on schedule"
             icon={DoorClosed}
           />
+          <StatsCard
+            title="Total Guests"
+            value={stats.pendingReservations}
+            subtitle="Active reservations"
+            icon={Users}
+          />
+          <StatsCard
+            title="Available Rooms"
+            value={stats.availableRooms}
+            subtitle={`${stats.totalRooms} total rooms`}
+            icon={BedDouble}
+            variant="primary"
+          />
         </div>
+
+        {/* Revenue Chart */}
+        <RevenueChart />
 
         {/* Room Status Grid */}
         <RoomStatusGrid rooms={mockRooms} />
 
-        {/* Charts and Activity */}
+        {/* Charts and Analytics Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <OccupancyChart />
+          <RoomTypeChart />
+          <GuestInsights />
+        </div>
+
+        {/* Reservations and Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
             <UpcomingReservations reservations={mockReservations} />
           </div>
-          <div className="space-y-6">
-            <OccupancyChart />
-          </div>
+          <QuickActions />
         </div>
 
         {/* Recent Activity */}

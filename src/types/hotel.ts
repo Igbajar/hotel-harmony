@@ -4,6 +4,9 @@ export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'mobile';
 export type ReservationStatus = 'pending' | 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
 export type RoomServiceOrderStatus = 'pending' | 'preparing' | 'delivering' | 'delivered' | 'cancelled';
 export type MenuCategory = 'breakfast' | 'lunch' | 'dinner' | 'snacks' | 'beverages' | 'desserts';
+export type HousekeepingTaskStatus = 'pending' | 'in-progress' | 'completed' | 'verified';
+export type HousekeepingTaskPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type HousekeepingTaskType = 'daily-cleaning' | 'checkout-cleaning' | 'deep-cleaning' | 'turndown' | 'maintenance-request' | 'laundry';
 
 export interface Room {
   id: string;
@@ -95,4 +98,36 @@ export interface RoomServiceOrder {
   estimatedDelivery?: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface HousekeepingStaff {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  shift: 'morning' | 'afternoon' | 'night';
+  status: 'available' | 'busy' | 'off-duty';
+  tasksCompleted: number;
+  averageTime: number; // in minutes
+  rating: number; // 1-5
+}
+
+export interface HousekeepingTask {
+  id: string;
+  roomId: string;
+  room?: Room;
+  assignedTo?: string;
+  staff?: HousekeepingStaff;
+  type: HousekeepingTaskType;
+  status: HousekeepingTaskStatus;
+  priority: HousekeepingTaskPriority;
+  notes?: string;
+  estimatedDuration: number; // in minutes
+  actualDuration?: number;
+  scheduledFor: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  createdAt: Date;
 }

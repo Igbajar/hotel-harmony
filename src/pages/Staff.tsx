@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Users, 
   UserPlus, 
@@ -19,16 +20,21 @@ import {
   Calendar,
   Phone,
   Mail,
-  MapPin,
   Filter,
   MoreVertical,
   Sun,
   Sunset,
-  Moon
+  Moon,
+  Pencil,
+  Trash2,
+  UserX
 } from 'lucide-react';
-import { mockStaff, mockStaffSchedules, mockAttendanceRecords } from '@/data/mockData';
-import { StaffRole, ShiftType, AttendanceStatus } from '@/types/hotel';
+import { mockStaff as initialMockStaff, mockStaffSchedules, mockAttendanceRecords } from '@/data/mockData';
+import { Staff, StaffRole, ShiftType, AttendanceStatus } from '@/types/hotel';
+import { StaffFormDialog } from '@/components/staff/StaffFormDialog';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const roleColors: Record<StaffRole, string> = {
   'manager': 'bg-purple-500/10 text-purple-500 border-purple-500/20',
@@ -62,13 +68,18 @@ const shiftIcons: Record<ShiftType, React.ElementType> = {
 };
 
 export default function StaffPage() {
+  const [staffList, setStaffList] = useState<Staff[]>(initialMockStaff);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [shiftFilter, setShiftFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
 
   const filteredStaff = useMemo(() => {
-    return mockStaff.filter(staff => {
+    return staffList.filter(staff => {
       const matchesSearch = 
         staff.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         staff.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,25 +90,70 @@ export default function StaffPage() {
       const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
       return matchesSearch && matchesRole && matchesShift && matchesStatus;
     });
-  }, [searchQuery, roleFilter, shiftFilter, statusFilter]);
+  }, [staffList, searchQuery, roleFilter, shiftFilter, statusFilter]);
 
   const stats = useMemo(() => {
-    const activeStaff = mockStaff.filter(s => s.status === 'active').length;
-    const onLeave = mockStaff.filter(s => s.status === 'on-leave').length;
-    const avgPerformance = mockStaff.reduce((acc, s) => acc + s.performanceScore, 0) / mockStaff.length;
-    const totalHours = mockStaff.reduce((acc, s) => acc + s.hoursWorked, 0);
+    const activeStaff = staffList.filter(s => s.status === 'active').length;
+    const onLeave = staffList.filter(s => s.status === 'on-leave').length;
+    const avgPerformance = staffList.reduce((acc, s) => acc + s.performanceScore, 0) / staffList.length;
+    const totalHours = staffList.reduce((acc, s) => acc + s.hoursWorked, 0);
     return { activeStaff, onLeave, avgPerformance, totalHours };
-  }, []);
+  }, [staffList]);
 
   const attendanceWithStaff = mockAttendanceRecords.map(record => ({
     ...record,
-    staff: mockStaff.find(s => s.id === record.staffId),
+    staff: staffList.find(s => s.id === record.staffId),
   }));
 
   const schedulesWithStaff = mockStaffSchedules.map(schedule => ({
     ...schedule,
-    staff: mockStaff.find(s => s.id === schedule.staffId),
+    staff: staffList.find(s => s.id === schedule.staffId),
   }));
+
+  const handleAddEmployee = () => {
+    setEditingStaff(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditEmployee = (staff: Staff) => {
+    setEditingStaff(staff);
+    setDialogOpen(true);
+  };
+
+  const handleSaveEmployee = (staff: Staff) => {
+    if (editingStaff) {
+      setStaffList(prev => prev.map(s => s.id === staff.id ? staff : s));
+    } else {
+      setStaffList(prev => [...prev, staff]);
+    }
+  };
+
+  const handleDeleteClick = (staff: Staff) => {
+    setStaffToDelete(staff);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (staffToDelete) {
+      setStaffList(prev => prev.filter(s => s.id !== staffToDelete.id));
+      toast({
+        title: 'Employee Removed',
+        description: `${staffToDelete.firstName} ${staffToDelete.lastName} has been removed.`,
+      });
+      setStaffToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleTerminateEmployee = (staff: Staff) => {
+    setStaffList(prev => prev.map(s => 
+      s.id === staff.id ? { ...s, status: 'terminated' as const } : s
+    ));
+    toast({
+      title: 'Employee Terminated',
+      description: `${staff.firstName} ${staff.lastName} has been marked as terminated.`,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -107,7 +163,7 @@ export default function StaffPage() {
           <h1 className="text-3xl font-bold tracking-tight">Staff Management</h1>
           <p className="text-muted-foreground">Manage employees, schedules, and performance</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={handleAddEmployee}>
           <UserPlus className="h-4 w-4" />
           Add Employee
         </Button>
@@ -266,9 +322,33 @@ export default function StaffPage() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleEditEmployee(staff)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          {staff.status !== 'terminated' && (
+                            <DropdownMenuItem onClick={() => handleTerminateEmployee(staff)}>
+                              <UserX className="mr-2 h-4 w-4" />
+                              Terminate
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteClick(staff)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
                     <div className="mt-4 space-y-2 text-sm">
@@ -445,7 +525,7 @@ export default function StaffPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[...mockStaff]
+                  {[...staffList]
                     .sort((a, b) => b.performanceScore - a.performanceScore)
                     .slice(0, 5)
                     .map((staff, index) => (
@@ -489,7 +569,7 @@ export default function StaffPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[...mockStaff]
+                  {[...staffList]
                     .sort((a, b) => b.hoursWorked - a.hoursWorked)
                     .slice(0, 5)
                     .map((staff, index) => (
@@ -530,7 +610,7 @@ export default function StaffPage() {
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {['Operations', 'Front Office', 'Housekeeping', 'Food & Beverage'].map((dept) => {
-                  const deptStaff = mockStaff.filter(s => s.department === dept);
+                  const deptStaff = staffList.filter(s => s.department === dept);
                   const avgScore = deptStaff.length ? deptStaff.reduce((acc, s) => acc + s.performanceScore, 0) / deptStaff.length : 0;
                   const totalTasks = deptStaff.reduce((acc, s) => acc + s.tasksCompleted, 0);
                   return (
@@ -556,6 +636,33 @@ export default function StaffPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Staff Form Dialog */}
+      <StaffFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        staff={editingStaff}
+        onSave={handleSaveEmployee}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {staffToDelete?.firstName} {staffToDelete?.lastName}? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

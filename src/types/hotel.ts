@@ -8,6 +8,55 @@ export type HousekeepingTaskStatus = 'pending' | 'in-progress' | 'completed' | '
 export type HousekeepingTaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type HousekeepingTaskType = 'daily-cleaning' | 'checkout-cleaning' | 'deep-cleaning' | 'turndown' | 'maintenance-request' | 'laundry';
 
+// Staff Management Types
+export type StaffRole = 'manager' | 'front-desk' | 'housekeeping' | 'maintenance' | 'restaurant' | 'security' | 'concierge' | 'admin';
+export type StaffStatus = 'active' | 'on-leave' | 'terminated';
+export type ShiftType = 'morning' | 'afternoon' | 'night';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'half-day' | 'on-leave';
+
+export interface Staff {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  role: StaffRole;
+  department: string;
+  status: StaffStatus;
+  shift: ShiftType;
+  hireDate: Date;
+  salary: number;
+  emergencyContact?: string;
+  address?: string;
+  performanceScore: number;
+  tasksCompleted: number;
+  hoursWorked: number;
+}
+
+export interface StaffSchedule {
+  id: string;
+  staffId: string;
+  staff?: Staff;
+  date: Date;
+  shiftStart: string;
+  shiftEnd: string;
+  break?: string;
+  notes?: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  staffId: string;
+  staff?: Staff;
+  date: Date;
+  status: AttendanceStatus;
+  checkIn?: Date;
+  checkOut?: Date;
+  hoursWorked?: number;
+  notes?: string;
+}
+
 export interface Room {
   id: string;
   number: string;

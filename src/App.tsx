@@ -16,6 +16,7 @@ import Staff from "./pages/Staff";
 import OnlineBooking from "./pages/OnlineBooking";
 import Reports from "./pages/Reports";
 import Billing from "./pages/Billing";
+import Restaurant from "./pages/Restaurant";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 
@@ -36,7 +37,7 @@ const App = () => (
               <Route path="/guests" element={<Guests />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/housekeeping" element={<Housekeeping />} />
-              <Route path="/restaurant" element={<ComingSoon />} />
+              <Route path="/restaurant" element={<Restaurant />} />
               <Route path="/room-service" element={<RoomService />} />
               <Route path="/events" element={<ComingSoon />} />
               <Route path="/staff" element={<Staff />} />

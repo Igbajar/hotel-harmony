@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { mockGuests } from '@/data/mockData';
 import { Guest } from '@/types/hotel';
+import { AddGuestDialog } from '@/components/dialogs/AddGuestDialog';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -123,6 +124,7 @@ function GuestCard({ guest }: { guest: Guest }) {
 export default function Guests() {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [addGuestOpen, setAddGuestOpen] = useState(false);
 
   const filteredGuests = mockGuests.filter((guest) => {
     const searchLower = searchQuery.toLowerCase();
@@ -218,11 +220,13 @@ export default function Guests() {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+          <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setAddGuestOpen(true)}>
             <Plus className="h-4 w-4" />
             Add Guest
           </Button>
         </div>
+
+        <AddGuestDialog open={addGuestOpen} onOpenChange={setAddGuestOpen} />
 
         {/* Guest Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

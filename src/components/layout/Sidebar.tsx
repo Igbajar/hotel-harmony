@@ -252,3 +252,125 @@ export function Sidebar() {
     </aside>
   );
 }
+
+// Mobile Sidebar Component
+interface MobileSidebarProps {
+  onNavigate: () => void;
+}
+
+export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
+  const location = useLocation();
+  
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    navGroups.forEach(group => {
+      initial[group.title] = true;
+    });
+    return initial;
+  });
+
+  const toggleSection = (title: string) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
+  const isActiveRoute = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
+
+  const MobileNavItem = ({ item }: { item: NavItem }) => {
+    const isActive = isActiveRoute(item.path);
+    
+    return (
+      <NavLink
+        to={item.path}
+        onClick={onNavigate}
+        className={cn(
+          'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+          'hover:bg-sidebar-accent/80',
+          isActive
+            ? 'bg-gradient-to-r from-sidebar-primary to-sidebar-primary/80 text-sidebar-primary-foreground shadow-md'
+            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
+        )}
+      >
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-accent" />
+        )}
+        
+        <item.icon className={cn(
+          'h-5 w-5 flex-shrink-0 transition-transform duration-200',
+          isActive && 'scale-110',
+          !isActive && 'group-hover:scale-105'
+        )} />
+        
+        <span className="flex-1 truncate">{item.label}</span>
+        {item.badge && (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground px-1.5 animate-pulse">
+            {item.badge}
+          </span>
+        )}
+      </NavLink>
+    );
+  };
+
+  const MobileNavSection = ({ group }: { group: NavGroup }) => {
+    const isOpen = openSections[group.title];
+    const hasActiveItem = group.items.some(item => isActiveRoute(item.path));
+    
+    return (
+      <Collapsible open={isOpen} onOpenChange={() => toggleSection(group.title)}>
+        <CollapsibleTrigger asChild>
+          <button className={cn(
+            'flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors',
+            hasActiveItem ? 'text-sidebar-foreground' : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/70'
+          )}>
+            <span>{group.title}</span>
+            <ChevronDown className={cn(
+              'h-3.5 w-3.5 transition-transform duration-200',
+              isOpen ? 'rotate-0' : '-rotate-90'
+            )} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-1 overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+          {group.items.map((item) => (
+            <MobileNavItem key={item.path} item={item} />
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-sidebar">
+      {/* Logo */}
+      <div className="flex h-16 items-center border-b border-sidebar-border px-4 gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/70 shadow-lg">
+          <Hotel className="h-5 w-5 text-sidebar-primary-foreground" />
+        </div>
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-lg font-bold text-sidebar-foreground tracking-tight">HotelPro</span>
+          <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50">
+            Management
+          </span>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-4">
+          {navGroups.map((group) => (
+            <MobileNavSection key={group.title} group={group} />
+          ))}
+        </nav>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-3">
+        <MobileNavItem item={{ label: 'Settings', icon: Settings, path: '/settings' }} />
+      </div>
+    </div>
+  );
+}

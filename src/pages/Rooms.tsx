@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { mockRooms } from '@/data/mockData';
 import { Room, RoomStatus } from '@/types/hotel';
+import { AddRoomDialog } from '@/components/dialogs/AddRoomDialog';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -153,6 +154,7 @@ export default function Rooms() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [addRoomOpen, setAddRoomOpen] = useState(false);
 
   const filteredRooms = mockRooms.filter((room) => {
     const matchesStatus = statusFilter === 'all' || room.status === statusFilter;
@@ -233,11 +235,13 @@ export default function Rooms() {
               <List className="h-4 w-4" />
             </Button>
           </div>
-          <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+          <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setAddRoomOpen(true)}>
             <Plus className="h-4 w-4" />
             Add Room
           </Button>
         </div>
+
+        <AddRoomDialog open={addRoomOpen} onOpenChange={setAddRoomOpen} />
 
         {/* Rooms Grid */}
         <div className={cn(

@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
+import { guestSchema, type GuestFormData } from '@/lib/validations';
+import { useCreateGuest } from '@/hooks/useGuests';
 
 interface AddGuestDialogProps {
   open: boolean;
@@ -13,65 +15,67 @@ interface AddGuestDialogProps {
 }
 
 export function AddGuestDialog({ open, onOpenChange }: AddGuestDialogProps) {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    idNumber: '',
-    nationality: '',
-    address: '',
-    vip: false,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
-      toast({ title: "Missing Fields", description: "Please fill in all required fields", variant: "destructive" });
-      return;
-    }
-
-    toast({ title: "Guest Added", description: `${formData.firstName} ${formData.lastName} has been added` });
-    onOpenChange(false);
-    setFormData({
+  const createGuest = useCreateGuest();
+  
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<GuestFormData>({
+    resolver: zodResolver(guestSchema),
+    defaultValues: {
       firstName: '',
       lastName: '',
       email: '',
       phone: '',
+      idType: '',
       idNumber: '',
       nationality: '',
       address: '',
       vip: false,
-    });
+      notes: '',
+    },
+  });
+
+  const vipValue = watch('vip');
+
+  const onSubmit = async (data: GuestFormData) => {
+    try {
+      await createGuest.mutateAsync(data);
+      onOpenChange(false);
+      reset();
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    reset();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Guest</DialogTitle>
           <DialogDescription>Register a new guest in the system</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name *</Label>
               <Input
                 id="firstName"
                 placeholder="John"
-                value={formData.firstName}
-                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                {...register('firstName')}
               />
+              {errors.firstName && <p className="text-sm text-destructive">{errors.firstName.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name *</Label>
               <Input
                 id="lastName"
                 placeholder="Doe"
-                value={formData.lastName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                {...register('lastName')}
               />
+              {errors.lastName && <p className="text-sm text-destructive">{errors.lastName.message}</p>}
             </div>
           </div>
 
@@ -82,18 +86,18 @@ export function AddGuestDialog({ open, onOpenChange }: AddGuestDialogProps) {
                 id="email"
                 type="email"
                 placeholder="john@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                {...register('email')}
               />
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone *</Label>
               <Input
                 id="phone"
                 placeholder="+1 234 567 890"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                {...register('phone')}
               />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
 
@@ -103,18 +107,18 @@ export function AddGuestDialog({ open, onOpenChange }: AddGuestDialogProps) {
               <Input
                 id="idNumber"
                 placeholder="Passport/ID"
-                value={formData.idNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, idNumber: e.target.value }))}
+                {...register('idNumber')}
               />
+              {errors.idNumber && <p className="text-sm text-destructive">{errors.idNumber.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="nationality">Nationality</Label>
               <Input
                 id="nationality"
                 placeholder="Country"
-                value={formData.nationality}
-                onChange={(e) => setFormData(prev => ({ ...prev, nationality: e.target.value }))}
+                {...register('nationality')}
               />
+              {errors.nationality && <p className="text-sm text-destructive">{errors.nationality.message}</p>}
             </div>
           </div>
 
@@ -123,10 +127,10 @@ export function AddGuestDialog({ open, onOpenChange }: AddGuestDialogProps) {
             <Textarea
               id="address"
               placeholder="Full address"
-              value={formData.address}
-              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+              {...register('address')}
               rows={2}
             />
+            {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
           </div>
 
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
@@ -136,14 +140,16 @@ export function AddGuestDialog({ open, onOpenChange }: AddGuestDialogProps) {
             </div>
             <Switch
               id="vip"
-              checked={formData.vip}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, vip: checked }))}
+              checked={vipValue}
+              onCheckedChange={(checked) => setValue('vip', checked)}
             />
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit">Add Guest</Button>
+            <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
+            <Button type="submit" disabled={createGuest.isPending}>
+              {createGuest.isPending ? 'Adding...' : 'Add Guest'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

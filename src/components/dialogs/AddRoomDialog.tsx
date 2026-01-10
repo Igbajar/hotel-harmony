@@ -1,11 +1,15 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { roomSchema, type RoomFormData } from '@/lib/validations';
+import { useCreateRoom } from '@/hooks/useRooms';
 import type { RoomType, RoomStatus } from '@/types/hotel';
 
 interface AddRoomDialogProps {
@@ -16,63 +20,70 @@ interface AddRoomDialogProps {
 const amenitiesList = ['WiFi', 'TV', 'AC', 'Mini Bar', 'Jacuzzi', 'Balcony', 'Safe', 'Coffee Maker'];
 
 export function AddRoomDialog({ open, onOpenChange }: AddRoomDialogProps) {
-  const [formData, setFormData] = useState({
-    number: '',
-    floor: '',
-    type: 'single' as RoomType,
-    status: 'available' as RoomStatus,
-    pricePerNight: '',
-    maxOccupancy: '',
-    amenities: [] as string[],
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.number || !formData.floor || !formData.pricePerNight) {
-      toast({ title: "Missing Fields", description: "Please fill in all required fields", variant: "destructive" });
-      return;
-    }
-
-    toast({ title: "Room Added", description: `Room ${formData.number} has been created successfully` });
-    onOpenChange(false);
-    setFormData({
+  const createRoom = useCreateRoom();
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<RoomFormData>({
+    resolver: zodResolver(roomSchema),
+    defaultValues: {
       number: '',
-      floor: '',
+      floor: 1,
       type: 'single',
       status: 'available',
-      pricePerNight: '',
-      maxOccupancy: '',
+      pricePerNight: 100,
+      maxOccupancy: 2,
       amenities: [],
+      description: '',
+    },
+  });
+
+  const watchType = watch('type');
+  const watchStatus = watch('status');
+
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities(prev => {
+      const newAmenities = prev.includes(amenity)
+        ? prev.filter(a => a !== amenity)
+        : [...prev, amenity];
+      setValue('amenities', newAmenities);
+      return newAmenities;
     });
   };
 
-  const toggleAmenity = (amenity: string) => {
-    setFormData(prev => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
-    }));
+  const onSubmit = async (data: RoomFormData) => {
+    try {
+      await createRoom.mutateAsync({ ...data, amenities: selectedAmenities });
+      onOpenChange(false);
+      reset();
+      setSelectedAmenities([]);
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    reset();
+    setSelectedAmenities([]);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Room</DialogTitle>
           <DialogDescription>Create a new room in the hotel inventory</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="number">Room Number *</Label>
               <Input
                 id="number"
                 placeholder="e.g., 101"
-                value={formData.number}
-                onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+                {...register('number')}
               />
+              {errors.number && <p className="text-sm text-destructive">{errors.number.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="floor">Floor *</Label>
@@ -80,16 +91,16 @@ export function AddRoomDialog({ open, onOpenChange }: AddRoomDialogProps) {
                 id="floor"
                 type="number"
                 placeholder="e.g., 1"
-                value={formData.floor}
-                onChange={(e) => setFormData(prev => ({ ...prev, floor: e.target.value }))}
+                {...register('floor')}
               />
+              {errors.floor && <p className="text-sm text-destructive">{errors.floor.message}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Room Type</Label>
-              <Select value={formData.type} onValueChange={(value: RoomType) => setFormData(prev => ({ ...prev, type: value }))}>
+              <Select value={watchType} onValueChange={(value: RoomType) => setValue('type', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -101,10 +112,11 @@ export function AddRoomDialog({ open, onOpenChange }: AddRoomDialogProps) {
                   <SelectItem value="presidential">Presidential</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={formData.status} onValueChange={(value: RoomStatus) => setFormData(prev => ({ ...prev, status: value }))}>
+              <Select value={watchStatus} onValueChange={(value: RoomStatus) => setValue('status', value as 'available' | 'occupied' | 'maintenance' | 'cleaning')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -114,29 +126,30 @@ export function AddRoomDialog({ open, onOpenChange }: AddRoomDialogProps) {
                   <SelectItem value="cleaning">Cleaning</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price Per Night ($) *</Label>
+              <Label htmlFor="pricePerNight">Price Per Night ($) *</Label>
               <Input
-                id="price"
+                id="pricePerNight"
                 type="number"
                 placeholder="e.g., 150"
-                value={formData.pricePerNight}
-                onChange={(e) => setFormData(prev => ({ ...prev, pricePerNight: e.target.value }))}
+                {...register('pricePerNight')}
               />
+              {errors.pricePerNight && <p className="text-sm text-destructive">{errors.pricePerNight.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="occupancy">Max Occupancy</Label>
+              <Label htmlFor="maxOccupancy">Max Occupancy</Label>
               <Input
-                id="occupancy"
+                id="maxOccupancy"
                 type="number"
                 placeholder="e.g., 2"
-                value={formData.maxOccupancy}
-                onChange={(e) => setFormData(prev => ({ ...prev, maxOccupancy: e.target.value }))}
+                {...register('maxOccupancy')}
               />
+              {errors.maxOccupancy && <p className="text-sm text-destructive">{errors.maxOccupancy.message}</p>}
             </div>
           </div>
 
@@ -147,7 +160,7 @@ export function AddRoomDialog({ open, onOpenChange }: AddRoomDialogProps) {
                 <div key={amenity} className="flex items-center space-x-2">
                   <Checkbox
                     id={amenity}
-                    checked={formData.amenities.includes(amenity)}
+                    checked={selectedAmenities.includes(amenity)}
                     onCheckedChange={() => toggleAmenity(amenity)}
                   />
                   <label htmlFor={amenity} className="text-sm cursor-pointer">{amenity}</label>
@@ -156,9 +169,22 @@ export function AddRoomDialog({ open, onOpenChange }: AddRoomDialogProps) {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Optional room description..."
+              {...register('description')}
+              rows={2}
+            />
+            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+          </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit">Add Room</Button>
+            <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
+            <Button type="submit" disabled={createRoom.isPending}>
+              {createRoom.isPending ? 'Adding...' : 'Add Room'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

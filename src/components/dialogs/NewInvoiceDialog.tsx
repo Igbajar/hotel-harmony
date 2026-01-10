@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
-import { mockGuests, mockRooms, mockReservations } from '@/data/mockData';
 import { Plus, Trash2 } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { invoiceSchema, type InvoiceFormData } from '@/lib/validations';
+import { useGuests } from '@/hooks/useGuests';
+import { useReservations } from '@/hooks/useReservations';
+import { useCreateInvoice } from '@/hooks/useInvoices';
 
 interface NewInvoiceDialogProps {
   open: boolean;
@@ -23,109 +27,129 @@ interface InvoiceItem {
 
 export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) {
   const { formatPrice } = useCurrency();
-  const [formData, setFormData] = useState({
-    guestId: '',
-    reservationId: '',
-    taxRate: '12',
-    discount: '0',
-    notes: '',
-  });
+  const { data: guests = [] } = useGuests();
+  const { data: reservations = [] } = useReservations();
+  const createInvoice = useCreateInvoice();
+
   const [items, setItems] = useState<InvoiceItem[]>([
     { description: '', quantity: 1, unitPrice: 0 }
   ]);
 
-  const guestReservations = mockReservations.filter(r => r.guestId === formData.guestId);
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<InvoiceFormData>({
+    resolver: zodResolver(invoiceSchema),
+    defaultValues: {
+      guestId: '',
+      reservationId: '',
+      taxRate: 12,
+      discount: 0,
+      notes: '',
+      items: [{ description: '', quantity: 1, unitPrice: 0 }],
+    },
+  });
+
+  const watchGuestId = watch('guestId');
+  const watchReservationId = watch('reservationId');
+  const watchTaxRate = watch('taxRate');
+  const watchDiscount = watch('discount');
+
+  const guestReservations = reservations.filter(r => r.guest_id === watchGuestId);
 
   const addItem = () => {
-    setItems(prev => [...prev, { description: '', quantity: 1, unitPrice: 0 }]);
+    const newItems = [...items, { description: '', quantity: 1, unitPrice: 0 }];
+    setItems(newItems);
+    setValue('items', newItems);
   };
 
   const removeItem = (index: number) => {
     if (items.length > 1) {
-      setItems(prev => prev.filter((_, i) => i !== index));
+      const newItems = items.filter((_, i) => i !== index);
+      setItems(newItems);
+      setValue('items', newItems);
     }
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
-    setItems(prev => prev.map((item, i) => 
+    const newItems = items.map((item, i) => 
       i === index ? { ...item, [field]: value } : item
-    ));
+    );
+    setItems(newItems);
+    setValue('items', newItems);
   };
 
   const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-  const taxAmount = subtotal * (parseFloat(formData.taxRate) / 100);
-  const discount = parseFloat(formData.discount) || 0;
+  const taxAmount = subtotal * (watchTaxRate / 100);
+  const discount = watchDiscount || 0;
   const total = subtotal + taxAmount - discount;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.guestId || items.some(item => !item.description || item.unitPrice <= 0)) {
-      toast({ title: "Missing Fields", description: "Please fill in all required fields", variant: "destructive" });
-      return;
+  const onSubmit = async (data: InvoiceFormData) => {
+    try {
+      await createInvoice.mutateAsync({
+        guestId: data.guestId,
+        reservationId: data.reservationId || undefined,
+        taxRate: data.taxRate,
+        discount: data.discount,
+        notes: data.notes,
+        items: items.filter(item => item.description && item.unitPrice > 0),
+      });
+      handleClose();
+    } catch {
+      // Error handled by hook
     }
+  };
 
-    const guest = mockGuests.find(g => g.id === formData.guestId);
-    
-    toast({ 
-      title: "Invoice Created", 
-      description: `Invoice for ${guest?.firstName} ${guest?.lastName} - ${formatPrice(total)}` 
-    });
-    
+  const handleClose = () => {
     onOpenChange(false);
-    setFormData({
-      guestId: '',
-      reservationId: '',
-      taxRate: '12',
-      discount: '0',
-      notes: '',
-    });
+    reset();
     setItems([{ description: '', quantity: 1, unitPrice: 0 }]);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Invoice</DialogTitle>
           <DialogDescription>Generate an invoice for a guest</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Guest *</Label>
-              <Select value={formData.guestId} onValueChange={(value) => setFormData(prev => ({ ...prev, guestId: value, reservationId: '' }))}>
+              <Select 
+                value={watchGuestId} 
+                onValueChange={(value) => {
+                  setValue('guestId', value);
+                  setValue('reservationId', '');
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a guest" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockGuests.map((guest) => (
+                  {guests.map((guest) => (
                     <SelectItem key={guest.id} value={guest.id}>
-                      {guest.firstName} {guest.lastName}
+                      {guest.first_name} {guest.last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {errors.guestId && <p className="text-sm text-destructive">{errors.guestId.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Reservation (Optional)</Label>
               <Select 
-                value={formData.reservationId} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, reservationId: value }))}
-                disabled={!formData.guestId}
+                value={watchReservationId} 
+                onValueChange={(value) => setValue('reservationId', value)}
+                disabled={!watchGuestId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Link to reservation" />
                 </SelectTrigger>
                 <SelectContent>
-                  {guestReservations.map((res) => {
-                    const room = mockRooms.find(r => r.id === res.roomId);
-                    return (
-                      <SelectItem key={res.id} value={res.id}>
-                        Room {room?.number} - {res.status}
-                      </SelectItem>
-                    );
-                  })}
+                  {guestReservations.map((res) => (
+                    <SelectItem key={res.id} value={res.id}>
+                      Room {res.rooms?.number} - {res.status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -181,6 +205,7 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
                 </div>
               ))}
             </div>
+            {errors.items && <p className="text-sm text-destructive">{errors.items.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -191,9 +216,9 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
                 type="number"
                 min="0"
                 max="100"
-                value={formData.taxRate}
-                onChange={(e) => setFormData(prev => ({ ...prev, taxRate: e.target.value }))}
+                {...register('taxRate')}
               />
+              {errors.taxRate && <p className="text-sm text-destructive">{errors.taxRate.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="discount">Discount ($)</Label>
@@ -201,9 +226,9 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
                 id="discount"
                 type="number"
                 min="0"
-                value={formData.discount}
-                onChange={(e) => setFormData(prev => ({ ...prev, discount: e.target.value }))}
+                {...register('discount')}
               />
+              {errors.discount && <p className="text-sm text-destructive">{errors.discount.message}</p>}
             </div>
           </div>
 
@@ -213,7 +238,7 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
               <span>{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tax ({formData.taxRate}%)</span>
+              <span className="text-muted-foreground">Tax ({watchTaxRate}%)</span>
               <span>{formatPrice(taxAmount)}</span>
             </div>
             {discount > 0 && (
@@ -233,15 +258,17 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
             <Textarea
               id="notes"
               placeholder="Additional notes..."
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              {...register('notes')}
               rows={2}
             />
+            {errors.notes && <p className="text-sm text-destructive">{errors.notes.message}</p>}
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit">Create Invoice</Button>
+            <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
+            <Button type="submit" disabled={createInvoice.isPending}>
+              {createInvoice.isPending ? 'Creating...' : 'Create Invoice'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

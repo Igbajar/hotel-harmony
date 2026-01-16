@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { format, differenceInDays, addDays, isBefore, isAfter, isSameDay } from 'date-fns';
+import { format, differenceInDays, isBefore, isAfter, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, Users, CreditCard, Check, ChevronRight, ChevronLeft, Bed, Wifi, Tv, Wind, Wine, Bath, UtensilsCrossed, Star, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,10 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { mockRooms, mockReservations } from '@/data/mockData';
+import { useRooms, Room } from '@/hooks/useRooms';
+import { useReservations, useCreateReservation } from '@/hooks/useReservations';
+import { useCreateGuest } from '@/hooks/useGuests';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from '@/hooks/use-toast';
-import type { RoomType } from '@/types/hotel';
 import { DateRange } from 'react-day-picker';
 
 const amenityIcons: Record<string, React.ReactNode> = {
@@ -28,7 +29,7 @@ const amenityIcons: Record<string, React.ReactNode> = {
   'Butler Service': <UtensilsCrossed className="h-4 w-4" />,
 };
 
-const roomTypeLabels: Record<RoomType, string> = {
+const roomTypeLabels: Record<Room['type'], string> = {
   single: 'Single Room',
   double: 'Double Room',
   suite: 'Suite',
@@ -63,6 +64,11 @@ interface BookingFormData {
 
 export default function OnlineBooking() {
   const { formatPrice } = useCurrency();
+  const { data: rooms = [], isLoading: roomsLoading } = useRooms();
+  const { data: reservations = [] } = useReservations();
+  const createReservation = useCreateReservation();
+  const createGuest = useCreateGuest();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<BookingFormData>({
     dateRange: undefined,
@@ -82,41 +88,42 @@ export default function OnlineBooking() {
   });
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [confirmationNumber, setConfirmationNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get available rooms based on dates
+  // Get available rooms based on dates from real database
   const availableRooms = useMemo(() => {
     if (!formData.dateRange?.from || !formData.dateRange?.to) return [];
     
     const checkIn = formData.dateRange.from;
     const checkOut = formData.dateRange.to;
     
-    return mockRooms.filter(room => {
+    return rooms.filter(room => {
       // Only show rooms that are not under maintenance
       if (room.status === 'maintenance') return false;
       
       // Check if room can accommodate guests
-      if (room.maxOccupancy < formData.adults + formData.children) return false;
+      if (room.max_occupancy < formData.adults + formData.children) return false;
       
       // Check for overlapping reservations
-      const hasConflict = mockReservations.some(res => {
-        if (res.roomId !== room.id) return false;
-        if (res.status === 'cancelled' || res.status === 'checked-out') return false;
+      const hasConflict = reservations.some(res => {
+        if (res.room_id !== room.id) return false;
+        if (res.status === 'cancelled' || res.status === 'checked_out') return false;
         
-        const resCheckIn = new Date(res.checkIn);
-        const resCheckOut = new Date(res.checkOut);
+        const resCheckIn = new Date(res.check_in);
+        const resCheckOut = new Date(res.check_out);
         
         return !(isAfter(checkIn, resCheckOut) || isBefore(checkOut, resCheckIn) || isSameDay(checkIn, resCheckOut));
       });
       
       return !hasConflict;
     });
-  }, [formData.dateRange, formData.adults, formData.children]);
+  }, [formData.dateRange, formData.adults, formData.children, rooms, reservations]);
 
-  const selectedRoom = mockRooms.find(r => r.id === formData.roomId);
+  const selectedRoom = rooms.find(r => r.id === formData.roomId);
   const nights = formData.dateRange?.from && formData.dateRange?.to 
     ? differenceInDays(formData.dateRange.to, formData.dateRange.from) 
     : 0;
-  const subtotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
+  const subtotal = selectedRoom ? selectedRoom.price_per_night * nights : 0;
   const taxes = subtotal * 0.12;
   const total = subtotal + taxes;
 
@@ -151,15 +158,49 @@ export default function OnlineBooking() {
     }
   };
 
-  const handleConfirmBooking = () => {
-    const confNumber = `BK${Date.now().toString().slice(-8)}`;
-    setConfirmationNumber(confNumber);
-    setBookingConfirmed(true);
-    setCurrentStep(5);
-    toast({
-      title: "Booking Confirmed!",
-      description: `Your reservation ${confNumber} has been successfully created.`,
-    });
+  const handleConfirmBooking = async () => {
+    if (!formData.dateRange?.from || !formData.dateRange?.to || !selectedRoom) return;
+    
+    setIsSubmitting(true);
+    try {
+      // Create guest first
+      const guestData = await createGuest.mutateAsync({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        vip: false,
+      });
+
+      // Create reservation
+      const reservationData = await createReservation.mutateAsync({
+        guestId: guestData.id,
+        roomId: formData.roomId,
+        checkIn: formData.dateRange.from,
+        checkOut: formData.dateRange.to,
+        adults: formData.adults,
+        children: formData.children,
+        specialRequests: formData.specialRequests,
+        pricePerNight: selectedRoom.price_per_night,
+      });
+
+      setConfirmationNumber(reservationData.confirmation_code || `BK${Date.now().toString().slice(-8)}`);
+      setBookingConfirmed(true);
+      setCurrentStep(5);
+      toast({
+        title: "Booking Confirmed!",
+        description: `Your reservation has been successfully created.`,
+      });
+    } catch (error) {
+      console.error('Booking failed:', error);
+      toast({
+        title: "Booking Failed",
+        description: "There was an error processing your reservation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Disable dates that are in the past
@@ -325,11 +366,15 @@ export default function OnlineBooking() {
                 <CardHeader>
                   <CardTitle>Select Your Room</CardTitle>
                   <CardDescription>
-                    {availableRooms.length} rooms available for your dates
+                    {roomsLoading ? 'Loading rooms...' : `${availableRooms.length} rooms available for your dates`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {availableRooms.length === 0 ? (
+                  {roomsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="text-muted-foreground">Loading available rooms...</div>
+                    </div>
+                  ) : availableRooms.length === 0 ? (
                     <div className="text-center py-12">
                       <Bed className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                       <h3 className="font-semibold mb-2">No Rooms Available</h3>
@@ -359,10 +404,10 @@ export default function OnlineBooking() {
                                 <Badge variant="outline">Room {room.number}</Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-3">
-                                Floor {room.floor} • Up to {room.maxOccupancy} guests
+                                Floor {room.floor} • Up to {room.max_occupancy} guests
                               </p>
                               <div className="flex flex-wrap gap-2">
-                                {room.amenities.map(amenity => (
+                                {room.amenities?.map(amenity => (
                                   <Badge key={amenity} variant="secondary" className="text-xs">
                                     {amenityIcons[amenity] || null}
                                     <span className="ml-1">{amenity}</span>
@@ -371,11 +416,11 @@ export default function OnlineBooking() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-2xl font-bold">{formatPrice(room.pricePerNight)}</div>
+                              <div className="text-2xl font-bold">{formatPrice(room.price_per_night)}</div>
                               <div className="text-xs text-muted-foreground">per night</div>
                               {nights > 0 && (
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  {formatPrice(room.pricePerNight * nights)} total
+                                  {formatPrice(room.price_per_night * nights)} total
                                 </div>
                               )}
                             </div>
@@ -424,26 +469,27 @@ export default function OnlineBooking() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => updateFormData({ email: e.target.value })}
-                        placeholder="john@example.com"
+                        placeholder="john.smith@email.com"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone *</Label>
                       <Input
                         id="phone"
+                        type="tel"
                         value={formData.phone}
                         onChange={(e) => updateFormData({ phone: e.target.value })}
-                        placeholder="+1 555-0100"
+                        placeholder="+1 (555) 123-4567"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="specialRequests">Special Requests (Optional)</Label>
+                    <Label htmlFor="specialRequests">Special Requests</Label>
                     <Textarea
                       id="specialRequests"
                       value={formData.specialRequests}
                       onChange={(e) => updateFormData({ specialRequests: e.target.value })}
-                      placeholder="Early check-in, room preferences, dietary requirements..."
+                      placeholder="Any special requests or preferences..."
                       rows={3}
                     />
                   </div>
@@ -456,11 +502,11 @@ export default function OnlineBooking() {
               <Card>
                 <CardHeader>
                   <CardTitle>Payment Details</CardTitle>
-                  <CardDescription>Your payment information is secure and encrypted</CardDescription>
+                  <CardDescription>Enter your payment information securely</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cardName">Name on Card *</Label>
+                    <Label htmlFor="cardName">Cardholder Name *</Label>
                     <Input
                       id="cardName"
                       value={formData.cardName}
@@ -473,21 +519,18 @@ export default function OnlineBooking() {
                     <Input
                       id="cardNumber"
                       value={formData.cardNumber}
-                      onChange={(e) => updateFormData({ cardNumber: e.target.value.replace(/\D/g, '').slice(0, 16) })}
+                      onChange={(e) => updateFormData({ cardNumber: e.target.value })}
                       placeholder="1234 5678 9012 3456"
+                      maxLength={19}
                     />
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="expiryDate">Expiry Date *</Label>
                       <Input
                         id="expiryDate"
                         value={formData.expiryDate}
-                        onChange={(e) => {
-                          let value = e.target.value.replace(/\D/g, '');
-                          if (value.length >= 2) value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                          updateFormData({ expiryDate: value });
-                        }}
+                        onChange={(e) => updateFormData({ expiryDate: e.target.value })}
                         placeholder="MM/YY"
                         maxLength={5}
                       />
@@ -496,24 +539,23 @@ export default function OnlineBooking() {
                       <Label htmlFor="cvv">CVV *</Label>
                       <Input
                         id="cvv"
+                        type="password"
                         value={formData.cvv}
-                        onChange={(e) => updateFormData({ cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                        onChange={(e) => updateFormData({ cvv: e.target.value })}
                         placeholder="123"
                         maxLength={4}
                       />
                     </div>
                   </div>
-                  <Separator className="my-4" />
-                  <div className="flex items-start space-x-3">
+                  <div className="flex items-center space-x-2 pt-4">
                     <Checkbox
                       id="terms"
                       checked={formData.agreeTerms}
                       onCheckedChange={(checked) => updateFormData({ agreeTerms: checked as boolean })}
                     />
-                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                      I agree to the hotel's terms and conditions, cancellation policy, and privacy policy. 
-                      I understand that my card will be charged upon confirmation.
-                    </label>
+                    <Label htmlFor="terms" className="text-sm text-muted-foreground">
+                      I agree to the terms and conditions and cancellation policy
+                    </Label>
                   </div>
                 </CardContent>
               </Card>
@@ -521,48 +563,47 @@ export default function OnlineBooking() {
 
             {/* Step 5: Confirmation */}
             {currentStep === 5 && bookingConfirmed && (
-              <Card className="border-primary/20">
-                <CardContent className="pt-8 text-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Check className="h-8 w-8 text-primary" />
+              <Card className="border-green-200 bg-green-50/50">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Check className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-green-700 mb-2">Booking Confirmed!</h2>
+                    <p className="text-muted-foreground mb-4">
+                      Your reservation has been successfully processed
+                    </p>
+                    <div className="bg-white rounded-lg p-4 inline-block">
+                      <p className="text-sm text-muted-foreground">Confirmation Number</p>
+                      <p className="text-2xl font-mono font-bold">{confirmationNumber}</p>
+                    </div>
+                    <div className="mt-6 text-left max-w-md mx-auto space-y-2 bg-white rounded-lg p-4">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Guest</span>
+                        <span className="font-medium">{formData.firstName} {formData.lastName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Room</span>
+                        <span className="font-medium">{selectedRoom && roomTypeLabels[selectedRoom.type]}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Check-in</span>
+                        <span className="font-medium">{formData.dateRange?.from && format(formData.dateRange.from, 'MMM dd, yyyy')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Check-out</span>
+                        <span className="font-medium">{formData.dateRange?.to && format(formData.dateRange.to, 'MMM dd, yyyy')}</span>
+                      </div>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-semibold">
+                        <span>Total Paid</span>
+                        <span>{formatPrice(total)}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-6">
+                      A confirmation email has been sent to {formData.email}
+                    </p>
                   </div>
-                  <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Your reservation has been successfully created
-                  </p>
-                  <div className="bg-muted/50 rounded-lg p-4 inline-block mb-6">
-                    <div className="text-sm text-muted-foreground">Confirmation Number</div>
-                    <div className="text-2xl font-mono font-bold">{confirmationNumber}</div>
-                  </div>
-                  <div className="text-left max-w-sm mx-auto space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Guest</span>
-                      <span className="font-medium">{formData.firstName} {formData.lastName}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Room</span>
-                      <span className="font-medium">{selectedRoom && roomTypeLabels[selectedRoom.type]} ({selectedRoom?.number})</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Check-in</span>
-                      <span className="font-medium">{formData.dateRange?.from && format(formData.dateRange.from, 'MMM dd, yyyy')}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Check-out</span>
-                      <span className="font-medium">{formData.dateRange?.to && format(formData.dateRange.to, 'MMM dd, yyyy')}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between font-semibold">
-                      <span>Total Paid</span>
-                      <span>{formatPrice(total)}</span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-6">
-                    A confirmation email has been sent to {formData.email}
-                  </p>
-                  <Button className="mt-6" onClick={() => window.location.reload()}>
-                    Make Another Reservation
-                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -579,13 +620,16 @@ export default function OnlineBooking() {
                   Back
                 </Button>
                 {currentStep === 4 ? (
-                  <Button onClick={handleConfirmBooking} disabled={!canProceed()}>
-                    Confirm Booking
+                  <Button 
+                    onClick={handleConfirmBooking} 
+                    disabled={!canProceed() || isSubmitting}
+                  >
+                    {isSubmitting ? 'Processing...' : 'Confirm & Pay'}
                     <Check className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
                   <Button onClick={handleNext} disabled={!canProceed()}>
-                    Continue
+                    Next
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 )}
@@ -594,84 +638,80 @@ export default function OnlineBooking() {
           </div>
 
           {/* Booking Summary Sidebar */}
-          {currentStep < 5 && (
-            <div className="lg:col-span-1">
-              <Card className="sticky top-4">
-                <CardHeader>
-                  <CardTitle className="text-lg">Booking Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {formData.dateRange?.from && formData.dateRange?.to ? (
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Booking Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.dateRange?.from && formData.dateRange?.to && (
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                      <CalendarIcon className="h-4 w-4" />
+                      Stay Dates
+                    </div>
+                    <p className="font-medium">
+                      {format(formData.dateRange.from, 'MMM dd')} - {format(formData.dateRange.to, 'MMM dd, yyyy')}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{nights} night{nights !== 1 ? 's' : ''}</p>
+                  </div>
+                )}
+
+                {(formData.adults > 0 || formData.children > 0) && (
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                      <Users className="h-4 w-4" />
+                      Guests
+                    </div>
+                    <p className="font-medium">
+                      {formData.adults} Adult{formData.adults !== 1 ? 's' : ''}
+                      {formData.children > 0 && `, ${formData.children} Child${formData.children !== 1 ? 'ren' : ''}`}
+                    </p>
+                  </div>
+                )}
+
+                {selectedRoom && (
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                      <Bed className="h-4 w-4" />
+                      Room
+                    </div>
+                    <p className="font-medium">{roomTypeLabels[selectedRoom.type]}</p>
+                    <p className="text-sm text-muted-foreground">Room {selectedRoom.number}</p>
+                  </div>
+                )}
+
+                {selectedRoom && nights > 0 && (
+                  <>
+                    <Separator />
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Check-in</span>
-                        <span className="font-medium">{format(formData.dateRange.from, 'MMM dd, yyyy')}</span>
+                        <span className="text-muted-foreground">
+                          {formatPrice(selectedRoom.price_per_night)} × {nights} night{nights !== 1 ? 's' : ''}
+                        </span>
+                        <span>{formatPrice(subtotal)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Check-out</span>
-                        <span className="font-medium">{format(formData.dateRange.to, 'MMM dd, yyyy')}</span>
+                        <span className="text-muted-foreground">Taxes & Fees (12%)</span>
+                        <span>{formatPrice(taxes)}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Duration</span>
-                        <span className="font-medium">{nights} night{nights !== 1 ? 's' : ''}</span>
+                      <Separator />
+                      <div className="flex justify-between font-semibold text-lg">
+                        <span>Total</span>
+                        <span>{formatPrice(total)}</span>
                       </div>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Select your dates to see pricing</p>
-                  )}
+                  </>
+                )}
 
-                  <Separator />
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Guests</span>
-                    <span className="font-medium">
-                      {formData.adults} adult{formData.adults !== 1 ? 's' : ''}
-                      {formData.children > 0 && `, ${formData.children} child${formData.children !== 1 ? 'ren' : ''}`}
-                    </span>
-                  </div>
-
-                  {selectedRoom && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Room</span>
-                          <span className="font-medium">{roomTypeLabels[selectedRoom.type]}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground text-right">
-                          Room {selectedRoom.number} • Floor {selectedRoom.floor}
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            {formatPrice(selectedRoom.pricePerNight)} × {nights} nights
-                          </span>
-                          <span>{formatPrice(subtotal)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Taxes & Fees (12%)</span>
-                          <span>{formatPrice(taxes)}</span>
-                        </div>
-                        <Separator />
-                        <div className="flex justify-between font-semibold text-lg">
-                          <span>Total</span>
-                          <span>{formatPrice(total)}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {!selectedRoom && nights > 0 && (
-                    <p className="text-sm text-muted-foreground">Select a room to see total price</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                {!selectedRoom && !formData.dateRange?.from && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Select your dates to see available rooms
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

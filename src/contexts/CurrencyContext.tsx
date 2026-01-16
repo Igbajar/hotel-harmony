@@ -40,7 +40,8 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrency] = useState<Currency>(currencies[0]); // Display currency
+  const ngnCurrency = currencies.find(c => c.code === 'NGN') || currencies[0];
+  const [currency, setCurrency] = useState<Currency>(ngnCurrency); // Display currency (NGN default)
   const [baseCurrency, setBaseCurrency] = useState<Currency>(currencies[0]); // Base currency (USD default)
   const [customRates, setCustomRates] = useState<Record<string, number>>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);

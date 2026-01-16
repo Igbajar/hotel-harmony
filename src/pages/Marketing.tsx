@@ -24,7 +24,8 @@ import { usePromotions, useCreatePromotion, useUpdatePromotion, useDeletePromoti
 import { campaignSchema, promotionSchema, CampaignFormData, PromotionFormData } from '@/lib/validations';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from '@/hooks/use-toast';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Campaign } from '@/hooks/useCampaigns';
+import type { Promotion } from '@/hooks/usePromotions';
 
 const campaignTypes = ['Email', 'SMS', 'Social Media', 'Display Ads', 'Direct Mail', 'Push Notification'];
 const roomTypes = ['single', 'double', 'suite', 'deluxe', 'presidential'] as const;
@@ -50,8 +51,8 @@ export default function Marketing() {
   
   const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
   const [promotionDialogOpen, setPromotionDialogOpen] = useState(false);
-  const [editingCampaign, setEditingCampaign] = useState<Tables<'campaigns'> | null>(null);
-  const [editingPromotion, setEditingPromotion] = useState<Tables<'promotions'> | null>(null);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
 
   const campaignForm = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
@@ -79,7 +80,7 @@ export default function Marketing() {
     },
   });
 
-  const openCampaignDialog = (campaign?: Tables<'campaigns'>) => {
+  const openCampaignDialog = (campaign?: Campaign) => {
     if (campaign) {
       setEditingCampaign(campaign);
       campaignForm.reset({
@@ -106,7 +107,7 @@ export default function Marketing() {
     setCampaignDialogOpen(true);
   };
 
-  const openPromotionDialog = (promotion?: Tables<'promotions'>) => {
+  const openPromotionDialog = (promotion?: Promotion) => {
     if (promotion) {
       setEditingPromotion(promotion);
       promotionForm.reset({
@@ -201,12 +202,12 @@ export default function Marketing() {
     }
   };
 
-  const toggleCampaignStatus = async (campaign: Tables<'campaigns'>) => {
+  const toggleCampaignStatus = async (campaign: Campaign) => {
     const newStatus: 'active' | 'paused' = campaign.status === 'active' ? 'paused' : 'active';
     await updateCampaign.mutateAsync({ id: campaign.id, campaign: { status: newStatus } });
   };
 
-  const togglePromotionActive = async (promotion: Tables<'promotions'>) => {
+  const togglePromotionActive = async (promotion: Promotion) => {
     await updatePromotion.mutateAsync({ id: promotion.id, promotion: { active: !promotion.active } });
   };
 

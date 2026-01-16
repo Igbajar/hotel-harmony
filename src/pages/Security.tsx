@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
-import type { Tables } from '@/integrations/supabase/types';
+import type { ActivityLog } from '@/hooks/useActivityLogs';
 
 const actionColors: Record<string, string> = {
   create: 'bg-green-500/10 text-green-600 border-green-500/20',
@@ -36,7 +36,7 @@ export default function Security() {
   const [searchQuery, setSearchQuery] = useState('');
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
-  const [selectedLog, setSelectedLog] = useState<Tables<'activity_logs'> | null>(null);
+  const [selectedLog, setSelectedLog] = useState<ActivityLog | null>(null);
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = 

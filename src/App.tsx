@@ -17,6 +17,9 @@ import OnlineBooking from "./pages/OnlineBooking";
 import Reports from "./pages/Reports";
 import Billing from "./pages/Billing";
 import Restaurant from "./pages/Restaurant";
+import Marketing from "./pages/Marketing";
+import MobileAppSettings from "./pages/MobileAppSettings";
+import Security from "./pages/Security";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 
@@ -42,9 +45,9 @@ const App = () => (
               <Route path="/events" element={<ComingSoon />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/online-booking" element={<OnlineBooking />} />
-              <Route path="/security" element={<ComingSoon />} />
-              <Route path="/mobile-app" element={<ComingSoon />} />
-              <Route path="/marketing" element={<ComingSoon />} />
+              <Route path="/security" element={<Security />} />
+              <Route path="/mobile-app" element={<MobileAppSettings />} />
+              <Route path="/marketing" element={<Marketing />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

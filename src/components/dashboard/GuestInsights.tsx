@@ -1,49 +1,57 @@
-import { mockGuests, mockReservations } from '@/data/mockData';
 import { Crown, Users, TrendingUp, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Guest } from '@/hooks/useGuests';
 
-const vipCount = mockGuests.filter(g => g.vip).length;
-const totalLoyaltyPoints = mockGuests.reduce((sum, g) => sum + g.loyaltyPoints, 0);
-const avgStays = Math.round(mockGuests.reduce((sum, g) => sum + g.totalStays, 0) / mockGuests.length);
-const returningGuests = mockGuests.filter(g => g.totalStays > 1).length;
+interface GuestInsightsProps {
+  guests: Guest[];
+}
 
-const insights = [
-  {
-    label: 'VIP Guests',
-    value: vipCount,
-    icon: Crown,
-    color: 'text-[hsl(var(--chart-2))]',
-    bgColor: 'bg-[hsl(var(--chart-2))]/10',
-  },
-  {
-    label: 'Total Guests',
-    value: mockGuests.length,
-    icon: Users,
-    color: 'text-[hsl(var(--chart-1))]',
-    bgColor: 'bg-[hsl(var(--chart-1))]/10',
-  },
-  {
-    label: 'Avg. Stays',
-    value: avgStays,
-    icon: TrendingUp,
-    color: 'text-[hsl(var(--chart-3))]',
-    bgColor: 'bg-[hsl(var(--chart-3))]/10',
-  },
-  {
-    label: 'Returning',
-    value: `${Math.round((returningGuests / mockGuests.length) * 100)}%`,
-    icon: Star,
-    color: 'text-[hsl(var(--chart-4))]',
-    bgColor: 'bg-[hsl(var(--chart-4))]/10',
-  },
-];
+export function GuestInsights({ guests }: GuestInsightsProps) {
+  const vipCount = guests.filter(g => g.vip).length;
+  const totalGuests = guests.length;
 
-export function GuestInsights() {
+  const insights = [
+    {
+      label: 'VIP Guests',
+      value: vipCount,
+      icon: Crown,
+      color: 'text-[hsl(var(--chart-2))]',
+      bgColor: 'bg-[hsl(var(--chart-2))]/10',
+    },
+    {
+      label: 'Total Guests',
+      value: totalGuests,
+      icon: Users,
+      color: 'text-[hsl(var(--chart-1))]',
+      bgColor: 'bg-[hsl(var(--chart-1))]/10',
+    },
+    {
+      label: 'This Month',
+      value: guests.filter(g => {
+        const createdAt = new Date(g.created_at);
+        const now = new Date();
+        return createdAt.getMonth() === now.getMonth() && createdAt.getFullYear() === now.getFullYear();
+      }).length,
+      icon: TrendingUp,
+      color: 'text-[hsl(var(--chart-3))]',
+      bgColor: 'bg-[hsl(var(--chart-3))]/10',
+    },
+    {
+      label: 'VIP Rate',
+      value: totalGuests > 0 ? `${Math.round((vipCount / totalGuests) * 100)}%` : '0%',
+      icon: Star,
+      color: 'text-[hsl(var(--chart-4))]',
+      bgColor: 'bg-[hsl(var(--chart-4))]/10',
+    },
+  ];
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 animate-fade-in">
       <div className="mb-6">
         <h3 className="text-lg font-semibold">Guest Insights</h3>
-        <p className="text-sm text-muted-foreground">Loyalty & demographics</p>
+        <p className="text-sm text-muted-foreground">
+          {totalGuests > 0 ? 'Guest demographics' : 'No guests registered'}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -61,15 +69,6 @@ export function GuestInsights() {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="mt-6 pt-4 border-t border-border">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total Loyalty Points</span>
-          <span className="text-lg font-semibold text-[hsl(var(--chart-2))]">
-            {totalLoyaltyPoints.toLocaleString()}
-          </span>
-        </div>
       </div>
     </div>
   );

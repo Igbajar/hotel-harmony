@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -22,11 +22,14 @@ import {
   ChevronRight,
   Hotel,
   ChevronDown,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
 interface NavItem {
   label: string;
@@ -76,6 +79,8 @@ const navGroups: NavGroup[] = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   
   // Track which sections are open
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -86,6 +91,15 @@ export function Sidebar() {
     });
     return initial;
   });
+
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: 'Logged Out',
+      description: 'You have been successfully logged out.',
+    });
+    navigate('/auth');
+  };
 
   const toggleSection = (title: string) => {
     setOpenSections(prev => ({
@@ -229,6 +243,34 @@ export function Sidebar() {
         <div className="border-t border-sidebar-border p-3 space-y-2">
           <NavItemComponent item={{ label: 'Settings', icon: Settings, path: '/settings' }} />
 
+          {/* User Email & Logout */}
+          {user && (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className={cn(
+                    'w-full text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10',
+                    collapsed ? 'justify-center' : 'justify-start gap-3'
+                  )}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {!collapsed && <span className="text-xs truncate">{user.email}</span>}
+                </Button>
+              </TooltipTrigger>
+              {collapsed && (
+                <TooltipContent side="right">
+                  <div className="text-xs">
+                    <p className="font-medium">{user.email}</p>
+                    <p className="text-muted-foreground">Click to logout</p>
+                  </div>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          )}
+
           <Button
             variant="ghost"
             size="sm"
@@ -260,6 +302,8 @@ interface MobileSidebarProps {
 
 export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -274,6 +318,16 @@ export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
       ...prev,
       [title]: !prev[title],
     }));
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: 'Logged Out',
+      description: 'You have been successfully logged out.',
+    });
+    onNavigate();
+    navigate('/auth');
   };
 
   const isActiveRoute = (path: string) => {
@@ -368,8 +422,21 @@ export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-3">
+      <div className="border-t border-sidebar-border p-3 space-y-2">
         <MobileNavItem item={{ label: 'Settings', icon: Settings, path: '/settings' }} />
+        
+        {/* User Email & Logout */}
+        {user && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="text-xs truncate">{user.email}</span>
+          </Button>
+        )}
       </div>
     </div>
   );

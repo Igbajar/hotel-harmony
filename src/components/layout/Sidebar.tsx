@@ -31,16 +31,20 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
+import type { UserAppRole } from '@/contexts/AuthContext';
+
 interface NavItem {
   label: string;
   icon: React.ElementType;
   path: string;
   badge?: number;
+  minRole?: UserAppRole; // Minimum role required to see this item
 }
 
 interface NavGroup {
   title: string;
   items: NavItem[];
+  minRole?: UserAppRole; // Minimum role required to see this group
 }
 
 const navGroups: NavGroup[] = [
@@ -51,7 +55,7 @@ const navGroups: NavGroup[] = [
       { label: 'Rooms', icon: BedDouble, path: '/rooms' },
       { label: 'Reservations', icon: CalendarDays, path: '/reservations', badge: 4 },
       { label: 'Guests', icon: Users, path: '/guests' },
-      { label: 'Billing', icon: Receipt, path: '/billing' },
+      { label: 'Billing', icon: Receipt, path: '/billing', minRole: 'manager' },
     ],
   },
   {
@@ -65,22 +69,47 @@ const navGroups: NavGroup[] = [
   },
   {
     title: 'Management',
+    minRole: 'manager',
     items: [
-      { label: 'Staff', icon: UserCog, path: '/staff' },
+      { label: 'Staff', icon: UserCog, path: '/staff', minRole: 'manager' },
       { label: 'Online Booking', icon: Globe, path: '/online-booking' },
-      { label: 'Security', icon: Shield, path: '/security' },
+      { label: 'Security', icon: Shield, path: '/security', minRole: 'admin' },
       { label: 'Mobile App', icon: Smartphone, path: '/mobile-app' },
-      { label: 'Marketing', icon: Megaphone, path: '/marketing' },
-      { label: 'Reports', icon: BarChart3, path: '/reports' },
+      { label: 'Marketing', icon: Megaphone, path: '/marketing', minRole: 'manager' },
+      { label: 'Reports', icon: BarChart3, path: '/reports', minRole: 'manager' },
     ],
   },
 ];
+
+// Role hierarchy for filtering
+const roleHierarchy: Record<UserAppRole, number> = {
+  admin: 4,
+  manager: 3,
+  staff: 2,
+  guest: 1,
+};
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, userRole } = useAuth();
+
+  // Check if user has access to an item based on role
+  const hasAccess = (minRole?: UserAppRole) => {
+    if (!minRole) return true;
+    if (!userRole) return false;
+    return roleHierarchy[userRole] >= roleHierarchy[minRole];
+  };
+
+  // Filter nav groups and items based on user role
+  const filteredNavGroups = navGroups
+    .filter(group => hasAccess(group.minRole))
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => hasAccess(item.minRole)),
+    }))
+    .filter(group => group.items.length > 0);
   
   // Track which sections are open
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -233,7 +262,7 @@ export function Sidebar() {
         {/* Navigation */}
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-4">
-            {navGroups.map((group) => (
+            {filteredNavGroups.map((group) => (
               <NavSection key={group.title} group={group} />
             ))}
           </nav>
@@ -257,14 +286,22 @@ export function Sidebar() {
                   )}
                 >
                   <LogOut className="h-4 w-4" />
-                  {!collapsed && <span className="text-xs truncate">{user.email}</span>}
+                  {!collapsed && (
+                    <div className="flex flex-col items-start flex-1 min-w-0">
+                      <span className="text-xs truncate w-full text-left">{user.email}</span>
+                      {userRole && (
+                        <span className="text-[10px] text-sidebar-foreground/40 capitalize">{userRole}</span>
+                      )}
+                    </div>
+                  )}
                 </Button>
               </TooltipTrigger>
               {collapsed && (
                 <TooltipContent side="right">
                   <div className="text-xs">
                     <p className="font-medium">{user.email}</p>
-                    <p className="text-muted-foreground">Click to logout</p>
+                    {userRole && <p className="text-muted-foreground capitalize">{userRole}</p>}
+                    <p className="text-muted-foreground mt-1">Click to logout</p>
                   </div>
                 </TooltipContent>
               )}
@@ -303,8 +340,24 @@ interface MobileSidebarProps {
 export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, userRole } = useAuth();
   
+  // Check if user has access to an item based on role
+  const hasAccess = (minRole?: UserAppRole) => {
+    if (!minRole) return true;
+    if (!userRole) return false;
+    return roleHierarchy[userRole] >= roleHierarchy[minRole];
+  };
+
+  // Filter nav groups and items based on user role
+  const filteredNavGroups = navGroups
+    .filter(group => hasAccess(group.minRole))
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => hasAccess(item.minRole)),
+    }))
+    .filter(group => group.items.length > 0);
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     navGroups.forEach(group => {
@@ -415,7 +468,7 @@ export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-4">
-          {navGroups.map((group) => (
+          {filteredNavGroups.map((group) => (
             <MobileNavSection key={group.title} group={group} />
           ))}
         </nav>
@@ -434,7 +487,12 @@ export function MobileSidebar({ onNavigate }: MobileSidebarProps) {
             className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut className="h-4 w-4" />
-            <span className="text-xs truncate">{user.email}</span>
+            <div className="flex flex-col items-start flex-1 min-w-0">
+              <span className="text-xs truncate w-full text-left">{user.email}</span>
+              {userRole && (
+                <span className="text-[10px] text-sidebar-foreground/40 capitalize">{userRole}</span>
+              )}
+            </div>
           </Button>
         )}
       </div>

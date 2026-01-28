@@ -143,6 +143,128 @@ export type Database = {
         }
         Relationships: []
       }
+      housekeeping_staff: {
+        Row: {
+          average_time: number | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          rating: number | null
+          shift: string
+          staff_id: string | null
+          status: string
+          tasks_completed: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_time?: number | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          rating?: number | null
+          shift: string
+          staff_id?: string | null
+          status?: string
+          tasks_completed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_time?: number | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          rating?: number | null
+          shift?: string
+          staff_id?: string | null
+          status?: string
+          tasks_completed?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housekeeping_staff_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housekeeping_tasks: {
+        Row: {
+          actual_duration: number | null
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          estimated_duration: number | null
+          id: string
+          notes: string | null
+          priority: string
+          room_id: string | null
+          scheduled_for: string
+          started_at: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          actual_duration?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          estimated_duration?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          room_id?: string | null
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          actual_duration?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          estimated_duration?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          room_id?: string | null
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housekeeping_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "housekeeping_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housekeeping_tasks_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           description: string
@@ -240,6 +362,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      menu_items: {
+        Row: {
+          available: boolean | null
+          category: string
+          created_at: string
+          description: string | null
+          dietary: string[] | null
+          id: string
+          image_url: string | null
+          name: string
+          preparation_time: number | null
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean | null
+          category: string
+          created_at?: string
+          description?: string | null
+          dietary?: string[] | null
+          id?: string
+          image_url?: string | null
+          name: string
+          preparation_time?: number | null
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          dietary?: string[] | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          preparation_time?: number | null
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       mobile_app_settings: {
         Row: {
@@ -399,6 +563,102 @@ export type Database = {
           },
           {
             foreignKeyName: "reservations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_service_order_items: {
+        Row: {
+          id: string
+          menu_item_id: string | null
+          order_id: string
+          quantity: number
+          special_instructions: string | null
+          subtotal: number
+        }
+        Insert: {
+          id?: string
+          menu_item_id?: string | null
+          order_id: string
+          quantity?: number
+          special_instructions?: string | null
+          subtotal?: number
+        }
+        Update: {
+          id?: string
+          menu_item_id?: string | null
+          order_id?: string
+          quantity?: number
+          special_instructions?: string | null
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_service_order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_service_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "room_service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_service_orders: {
+        Row: {
+          created_at: string
+          delivery_fee: number | null
+          estimated_delivery: string | null
+          guest_id: string | null
+          id: string
+          room_id: string | null
+          special_instructions: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_fee?: number | null
+          estimated_delivery?: string | null
+          guest_id?: string | null
+          id?: string
+          room_id?: string | null
+          special_instructions?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_fee?: number | null
+          estimated_delivery?: string | null
+          guest_id?: string | null
+          id?: string
+          room_id?: string | null
+          special_instructions?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_service_orders_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_service_orders_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"

@@ -22,6 +22,7 @@ import Restaurant from "./pages/Restaurant";
 import Marketing from "./pages/Marketing";
 import MobileAppSettings from "./pages/MobileAppSettings";
 import Security from "./pages/Security";
+import UserManagement from "./pages/UserManagement";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -58,6 +59,7 @@ const App = () => (
                 <Route path="/events" element={<ComingSoon />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/security" element={<Security />} />
+                <Route path="/users" element={<UserManagement />} />
                 <Route path="/mobile-app" element={<MobileAppSettings />} />
                 <Route path="/marketing" element={<Marketing />} />
                 <Route path="/reports" element={<Reports />} />

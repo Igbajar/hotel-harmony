@@ -22,16 +22,7 @@ export function useUsers() {
         throw new Error('Not authenticated');
       }
 
-      const response = await supabase.functions.invoke('manage-users', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: null,
-      });
-
-      // Handle the query parameter by making a direct fetch
-      const { data, error } = await fetch(
+      const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
         {
           method: 'GET',
@@ -40,12 +31,9 @@ export function useUsers() {
             'Content-Type': 'application/json',
           },
         }
-      ).then(res => res.json().then(data => ({ data, error: null })))
-        .catch(error => ({ data: null, error }));
+      );
 
-      if (error) {
-        throw new Error(error.message || 'Failed to fetch users');
-      }
+      const data = await response.json();
 
       if (data.error) {
         throw new Error(data.error);

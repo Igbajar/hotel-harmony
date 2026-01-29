@@ -12,6 +12,7 @@ import {
   ConciergeBell,
   Calendar,
   UserCog,
+  UsersRound,
   Globe,
   Shield,
   Smartphone,
@@ -72,6 +73,7 @@ const navGroups: NavGroup[] = [
     minRole: 'manager',
     items: [
       { label: 'Staff', icon: UserCog, path: '/staff', minRole: 'manager' },
+      { label: 'Users', icon: UsersRound, path: '/users', minRole: 'admin' },
       { label: 'Online Booking', icon: Globe, path: '/online-booking' },
       { label: 'Security', icon: Shield, path: '/security', minRole: 'admin' },
       { label: 'Mobile App', icon: Smartphone, path: '/mobile-app' },

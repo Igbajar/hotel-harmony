@@ -2,13 +2,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
       .from('user_roles')
       .select('role')
       .eq('user_id', requestingUser.id)
-      .single()
+      .maybeSingle()
 
     if (roleData?.role !== 'admin') {
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
@@ -58,10 +59,26 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url)
-    const action = url.searchParams.get('action')
+    let action = url.searchParams.get('action')
 
-    // GET: List all users
-    if (req.method === 'GET' && action === 'list') {
+    // Also allow action to be passed in request body.
+    // NOTE: Some clients (including certain testing tools) don't set Content-Type,
+    // so we parse defensively from raw text.
+    let body: any = null
+    if (req.method !== 'GET') {
+      const raw = await req.text().catch(() => '')
+      if (raw) {
+        try {
+          body = JSON.parse(raw)
+        } catch {
+          body = null
+        }
+      }
+    }
+    if (!action) action = body?.action ?? null
+
+    // List all users (GET ?action=list OR POST { action: 'list' })
+    if ((req.method === 'GET' || req.method === 'POST') && action === 'list') {
       const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
       
       if (listError) {
@@ -94,9 +111,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    // POST: Update user role
+    // Update user role (POST { action: 'update-role', userId, role })
     if (req.method === 'POST' && action === 'update-role') {
-      const { userId, role } = await req.json()
+      const { userId, role } = body ?? {}
 
       if (!userId || !role) {
         return new Response(JSON.stringify({ error: 'userId and role are required' }), {
@@ -127,7 +144,7 @@ Deno.serve(async (req) => {
         .from('user_roles')
         .select('id')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
       if (existingRole) {
         // Update existing role
@@ -162,9 +179,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    // DELETE: Remove user
-    if (req.method === 'DELETE' && action === 'delete-user') {
-      const { userId } = await req.json()
+    // Remove user (POST or DELETE { action: 'delete-user', userId })
+    if ((req.method === 'POST' || req.method === 'DELETE') && action === 'delete-user') {
+      const { userId } = body ?? {}
 
       if (!userId) {
         return new Response(JSON.stringify({ error: 'userId is required' }), {

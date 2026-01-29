@@ -16,30 +16,14 @@ export function useUsers() {
   return useQuery({
     queryKey: ['managed-users'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'list' },
+      });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      return data.users as ManagedUser[];
+      return (data?.users ?? []) as ManagedUser[];
     },
   });
 }
@@ -49,29 +33,12 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: UserAppRole }) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'update-role', userId, role },
+      });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=update-role`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId, role }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       return data;
     },
@@ -97,29 +64,12 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'delete-user', userId },
+      });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=delete-user`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       return data;
     },

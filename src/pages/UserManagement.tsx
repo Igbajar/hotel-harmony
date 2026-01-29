@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { useUsers, useUpdateUserRole, useDeleteUser, type ManagedUser, type UserAppRole } from '@/hooks/useUsers';
+import { useUsers, useDeleteUser, type ManagedUser, type UserAppRole } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Shield, UserCog, User, Trash2, RefreshCw } from 'lucide-react';
+import { Users, Shield, UserCog, User, Trash2, RefreshCw, Plus, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import { UserFormDialog } from '@/components/dialogs/UserFormDialog';
 
 const roleColors: Record<UserAppRole, string> = {
   admin: 'bg-red-500/10 text-red-500 border-red-500/20',
@@ -28,13 +28,22 @@ const roleIcons: Record<UserAppRole, React.ElementType> = {
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
   const { data: users, isLoading, error, refetch } = useUsers();
-  const updateRole = useUpdateUserRole();
   const deleteUser = useDeleteUser();
-  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
 
-  const handleRoleChange = async (userId: string, newRole: UserAppRole) => {
-    await updateRole.mutateAsync({ userId, role: newRole });
-    setEditingUserId(null);
+  const handleAddUser = () => {
+    setSelectedUser(null);
+    setDialogMode('create');
+    setDialogOpen(true);
+  };
+
+  const handleEditUser = (user: ManagedUser) => {
+    setSelectedUser(user);
+    setDialogMode('edit');
+    setDialogOpen(true);
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -84,10 +93,16 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
           <p className="text-muted-foreground">Manage user accounts and roles</p>
         </div>
-        <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={handleAddUser}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add User
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -172,24 +187,7 @@ export default function UserManagement() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {editingUserId === user.id ? (
-                        <Select
-                          defaultValue={user.role || undefined}
-                          onValueChange={(value) => handleRoleChange(user.id, value as UserAppRole)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="staff">Staff</SelectItem>
-                            <SelectItem value="guest">Guest</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        getRoleBadge(user.role)
-                      )}
+                      {getRoleBadge(user.role)}
                     </TableCell>
                     <TableCell>
                       {format(new Date(user.created_at), 'MMM d, yyyy')}
@@ -205,10 +203,10 @@ export default function UserManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setEditingUserId(editingUserId === user.id ? null : user.id)}
-                          disabled={updateRole.isPending}
+                          onClick={() => handleEditUser(user)}
                         >
-                          {editingUserId === user.id ? 'Cancel' : 'Change Role'}
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Edit
                         </Button>
                         {user.id !== currentUser?.id && (
                           <AlertDialog>
@@ -256,6 +254,14 @@ export default function UserManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* User Form Dialog */}
+      <UserFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        mode={dialogMode}
+        user={selectedUser}
+      />
     </div>
   );
 }

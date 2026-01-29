@@ -111,6 +111,75 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Create new user (POST { action: 'create-user', email, password, role })
+    if (req.method === 'POST' && action === 'create-user') {
+      const { email, password, role } = body ?? {}
+
+      if (!email || !password) {
+        return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        return new Response(JSON.stringify({ error: 'Invalid email format' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Validate password length
+      if (password.length < 6) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Validate role if provided
+      const validRoles = ['admin', 'manager', 'staff', 'guest']
+      if (role && !validRoles.includes(role)) {
+        return new Response(JSON.stringify({ error: 'Invalid role' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Create user via admin API
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // Auto-confirm the email
+      })
+
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Assign role if provided
+      if (role && newUser.user) {
+        const { error: roleError } = await supabaseAdmin
+          .from('user_roles')
+          .insert({ user_id: newUser.user.id, role })
+
+        if (roleError) {
+          console.error('Failed to assign role:', roleError)
+          // User was created but role assignment failed - log but don't fail
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, user: newUser.user }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Update user role (POST { action: 'update-role', userId, role })
     if (req.method === 'POST' && action === 'update-role') {
       const { userId, role } = body ?? {}

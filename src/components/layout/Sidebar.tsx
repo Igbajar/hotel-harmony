@@ -24,6 +24,9 @@ import {
   Hotel,
   ChevronDown,
   LogOut,
+  Wine,
+  Package,
+  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -64,7 +67,10 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Housekeeping', icon: ClipboardList, path: '/housekeeping' },
       { label: 'Restaurant', icon: Utensils, path: '/restaurant' },
+      { label: 'Bar', icon: Wine, path: '/bar' },
       { label: 'Room Service', icon: ConciergeBell, path: '/room-service' },
+      { label: 'Inventory', icon: Package, path: '/inventory' },
+      { label: 'Vendors', icon: Truck, path: '/vendors', minRole: 'manager' },
       { label: 'Events', icon: Calendar, path: '/events' },
     ],
   },

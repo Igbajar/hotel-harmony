@@ -47,6 +47,303 @@ export type Database = {
         }
         Relationships: []
       }
+      bar_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      bar_drink_measures: {
+        Row: {
+          created_at: string
+          drink_id: string
+          id: string
+          measure_ml: number | null
+          measure_name: string
+          price: number
+          sort_order: number
+          stock_deduction: number
+        }
+        Insert: {
+          created_at?: string
+          drink_id: string
+          id?: string
+          measure_ml?: number | null
+          measure_name: string
+          price: number
+          sort_order?: number
+          stock_deduction?: number
+        }
+        Update: {
+          created_at?: string
+          drink_id?: string
+          id?: string
+          measure_ml?: number | null
+          measure_name?: string
+          price?: number
+          sort_order?: number
+          stock_deduction?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_drink_measures_drink_id_fkey"
+            columns: ["drink_id"]
+            isOneToOne: false
+            referencedRelation: "bar_drinks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_drinks: {
+        Row: {
+          available: boolean
+          category_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          reorder_point: number
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          category_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          reorder_point?: number
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          reorder_point?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_drinks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "bar_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_inventory: {
+        Row: {
+          created_at: string
+          current_stock: number
+          drink_id: string
+          id: string
+          last_restock_at: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_stock?: number
+          drink_id: string
+          id?: string
+          last_restock_at?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_stock?: number
+          drink_id?: string
+          id?: string
+          last_restock_at?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_inventory_drink_id_fkey"
+            columns: ["drink_id"]
+            isOneToOne: true
+            referencedRelation: "bar_drinks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_inventory_transactions: {
+        Row: {
+          created_at: string
+          drink_id: string
+          id: string
+          notes: string | null
+          quantity: number
+          reference_id: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          drink_id: string
+          id?: string
+          notes?: string | null
+          quantity: number
+          reference_id?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          drink_id?: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          reference_id?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_inventory_transactions_drink_id_fkey"
+            columns: ["drink_id"]
+            isOneToOne: false
+            referencedRelation: "bar_drinks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_order_items: {
+        Row: {
+          created_at: string
+          drink_id: string
+          id: string
+          measure_id: string
+          order_id: string
+          quantity: number
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          drink_id: string
+          id?: string
+          measure_id: string
+          order_id: string
+          quantity?: number
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          drink_id?: string
+          id?: string
+          measure_id?: string
+          order_id?: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_order_items_drink_id_fkey"
+            columns: ["drink_id"]
+            isOneToOne: false
+            referencedRelation: "bar_drinks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_order_items_measure_id_fkey"
+            columns: ["measure_id"]
+            isOneToOne: false
+            referencedRelation: "bar_drink_measures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "bar_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_orders: {
+        Row: {
+          bartender_id: string | null
+          created_at: string
+          guest_id: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          payment_method: string | null
+          room_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          bartender_id?: string | null
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          payment_method?: string | null
+          room_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          bartender_id?: string | null
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string | null
+          room_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_orders_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_orders_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           budget: number | null
@@ -504,6 +801,104 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          drink_id: string
+          id: string
+          po_id: string
+          quantity: number
+          received_quantity: number
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          drink_id: string
+          id?: string
+          po_id: string
+          quantity?: number
+          received_quantity?: number
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          drink_id?: string
+          id?: string
+          po_id?: string
+          quantity?: number
+          received_quantity?: number
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_drink_id_fkey"
+            columns: ["drink_id"]
+            isOneToOne: false
+            referencedRelation: "bar_drinks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          actual_delivery: string | null
+          created_at: string
+          created_by: string | null
+          expected_delivery: string | null
+          id: string
+          notes: string | null
+          po_number: string
+          status: string
+          total_amount: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          actual_delivery?: string | null
+          created_at?: string
+          created_by?: string | null
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          po_number: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          actual_delivery?: string | null
+          created_at?: string
+          created_by?: string | null
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          po_number?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           adults: number
@@ -786,6 +1181,102 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["user_app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          po_id: string | null
+          reference: string | null
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          po_id?: string | null
+          reference?: string | null
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          po_id?: string | null
+          reference?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_payments_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_payments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          products_supplied: string[] | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          products_supplied?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          products_supplied?: string[] | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }

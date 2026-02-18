@@ -23,6 +23,9 @@ import Marketing from "./pages/Marketing";
 import MobileAppSettings from "./pages/MobileAppSettings";
 import Security from "./pages/Security";
 import UserManagement from "./pages/UserManagement";
+import Bar from "./pages/Bar";
+import Inventory from "./pages/Inventory";
+import Vendors from "./pages/Vendors";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -56,6 +59,9 @@ const App = () => (
                 <Route path="/housekeeping" element={<Housekeeping />} />
                 <Route path="/restaurant" element={<Restaurant />} />
                 <Route path="/room-service" element={<RoomService />} />
+                <Route path="/bar" element={<Bar />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/vendors" element={<Vendors />} />
                 <Route path="/events" element={<ComingSoon />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/security" element={<Security />} />

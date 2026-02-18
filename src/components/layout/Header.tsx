@@ -1,4 +1,5 @@
-import { Bell, Search, Plus, ChevronDown } from 'lucide-react';
+import { Bell, Search, Plus, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,12 +22,22 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   const { currency, setCurrency } = useCurrency();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === '/' || location.pathname === '/dashboard';
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+      <div className="flex items-center gap-3">
+        {!isHome && (
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

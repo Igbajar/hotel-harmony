@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, differenceInDays, isBefore, isAfter, isSameDay } from 'date-fns';
-import { Calendar as CalendarIcon, Users, CreditCard, Check, ChevronRight, ChevronLeft, Bed, Wifi, Tv, Wind, Wine, Bath, UtensilsCrossed, Star, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, Users, CreditCard, Check, ChevronRight, ChevronLeft, Bed, Wifi, Tv, Wind, Wine, Bath, UtensilsCrossed, Star, MapPin, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,6 +64,7 @@ interface BookingFormData {
 }
 
 export default function OnlineBooking() {
+  const navigate = useNavigate();
   const { formatPrice } = useCurrency();
   const { data: rooms = [], isLoading: roomsLoading } = useRooms();
   const { data: reservations = [] } = useReservations();
@@ -208,6 +210,14 @@ export default function OnlineBooking() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      {/* Back Button */}
+      <div className="container mx-auto px-4 pt-4">
+        <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate('/')}>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
+
       {/* Hero Section */}
       <div className="relative bg-primary/5 border-b">
         <div className="container mx-auto px-4 py-12">

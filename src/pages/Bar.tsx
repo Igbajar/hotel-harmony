@@ -14,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useBarCategories, useBarDrinks, useCreateBarDrink, useCreateBarOrder, useBarOrders, BarDrink, BarDrinkMeasure } from '@/hooks/useBar';
 import { Wine, Plus, Trash2, ShoppingCart, X, CreditCard, Banknote, History } from 'lucide-react';
+import { DrinkImportExport } from '@/components/bar/DrinkImportExport';
 import { cn } from '@/lib/utils';
 
 interface CartItem {
@@ -204,6 +205,7 @@ export default function Bar() {
               </div>
             </DialogContent>
           </Dialog>
+          <DrinkImportExport />
           <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowHistory(!showHistory)}>
             <History className="h-4 w-4" /> {showHistory ? 'Hide' : 'Show'} History
           </Button>

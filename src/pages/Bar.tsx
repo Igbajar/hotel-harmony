@@ -13,8 +13,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useBarCategories, useBarDrinks, useCreateBarDrink, useCreateBarOrder, useBarOrders, BarDrink, BarDrinkMeasure } from '@/hooks/useBar';
-import { Wine, Plus, Trash2, ShoppingCart, X, CreditCard, Banknote, History } from 'lucide-react';
+import { Wine, Plus, Trash2, ShoppingCart, X, CreditCard, Banknote, History, BarChart3 } from 'lucide-react';
 import { DrinkImportExport } from '@/components/bar/DrinkImportExport';
+import { BarAnalytics } from '@/components/bar/BarAnalytics';
+import { useBarInventory } from '@/hooks/useInventory';
 import { cn } from '@/lib/utils';
 
 interface CartItem {
@@ -28,6 +30,7 @@ export default function Bar() {
   const { data: categories = [] } = useBarCategories();
   const { data: drinks = [], isLoading } = useBarDrinks();
   const { data: orders = [] } = useBarOrders();
+  const { data: inventory = [] } = useBarInventory();
   const createDrink = useCreateBarDrink();
   const createOrder = useCreateBarOrder();
 
@@ -36,6 +39,14 @@ export default function Bar() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [addDrinkOpen, setAddDrinkOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+
+  // Build stock lookup map: drink_id -> current_stock
+  const stockMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    inventory.forEach(inv => { map[inv.drink_id] = inv.current_stock; });
+    return map;
+  }, [inventory]);
 
   // New drink form
   const [newDrink, setNewDrink] = useState({
@@ -206,12 +217,17 @@ export default function Bar() {
             </DialogContent>
           </Dialog>
           <DrinkImportExport />
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowHistory(!showHistory)}>
-            <History className="h-4 w-4" /> {showHistory ? 'Hide' : 'Show'} History
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => { setShowHistory(!showHistory); setShowAnalytics(false); }}>
+            <History className="h-4 w-4" /> {showHistory ? 'Hide' : ''} History
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => { setShowAnalytics(!showAnalytics); setShowHistory(false); }}>
+            <BarChart3 className="h-4 w-4" /> {showAnalytics ? 'Hide' : ''} Analytics
           </Button>
         </div>
 
-        {showHistory ? (
+        {showAnalytics ? (
+          <BarAnalytics />
+        ) : showHistory ? (
           <Card>
             <CardHeader><CardTitle>Recent Orders</CardTitle></CardHeader>
             <CardContent>
@@ -283,7 +299,15 @@ export default function Bar() {
                   {filteredDrinks.map(drink => (
                     <Card key={drink.id} className="overflow-hidden">
                       <CardContent className="p-3">
-                        <h3 className="font-semibold text-sm mb-2 truncate">{drink.name}</h3>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-sm truncate">{drink.name}</h3>
+                          <Badge
+                            variant={stockMap[drink.id] <= (drink.reorder_point || 5) ? 'destructive' : 'secondary'}
+                            className="text-[10px] px-1.5 py-0 shrink-0 ml-1"
+                          >
+                            {stockMap[drink.id] != null ? stockMap[drink.id] : '—'}
+                          </Badge>
+                        </div>
                         {drink.description && (
                           <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{drink.description}</p>
                         )}

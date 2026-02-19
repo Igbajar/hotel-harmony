@@ -12,16 +12,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/hooks/use-toast';
 import { useBarInventory, useInventoryTransactions, useAdjustStock } from '@/hooks/useInventory';
 import { useBarDrinks } from '@/hooks/useBar';
+import { useVendors } from '@/hooks/useVendors';
 import { Package, AlertTriangle, ArrowUpCircle, ArrowDownCircle, ClipboardCheck, Trash2 } from 'lucide-react';
 
 export default function Inventory() {
   const { data: inventory = [], isLoading } = useBarInventory();
   const { data: transactions = [] } = useInventoryTransactions();
   const { data: drinks = [] } = useBarDrinks();
+  const { data: vendors = [] } = useVendors();
   const adjustStock = useAdjustStock();
 
   const [adjustOpen, setAdjustOpen] = useState(false);
-  const [adjustForm, setAdjustForm] = useState({ drink_id: '', quantity: 0, type: 'purchase' as 'purchase' | 'wastage' | 'adjustment' | 'stocktake', notes: '' });
+  const [adjustForm, setAdjustForm] = useState({ drink_id: '', quantity: 0, type: 'purchase' as 'purchase' | 'wastage' | 'adjustment' | 'stocktake', notes: '', vendor_id: '' });
 
   const lowStockItems = inventory.filter(i => i.drink && i.current_stock <= (i.drink.reorder_point || 5));
   const totalItems = inventory.length;
@@ -34,9 +36,9 @@ export default function Inventory() {
     }
     try {
       const qty = adjustForm.type === 'wastage' ? -Math.abs(adjustForm.quantity) : adjustForm.quantity;
-      await adjustStock.mutateAsync({ ...adjustForm, quantity: qty });
+      await adjustStock.mutateAsync({ ...adjustForm, quantity: qty, vendor_id: adjustForm.vendor_id || undefined });
       setAdjustOpen(false);
-      setAdjustForm({ drink_id: '', quantity: 0, type: 'purchase', notes: '' });
+      setAdjustForm({ drink_id: '', quantity: 0, type: 'purchase', notes: '', vendor_id: '' });
       toast({ title: 'Stock Updated', description: `Inventory has been updated` });
     } catch {
       toast({ title: 'Error', description: 'Failed to update stock', variant: 'destructive' });
@@ -95,6 +97,17 @@ export default function Inventory() {
                     </SelectContent>
                   </Select>
                 </div>
+                {adjustForm.type === 'purchase' && (
+                  <div className="space-y-2">
+                    <Label>Vendor (Supplier)</Label>
+                    <Select value={adjustForm.vendor_id} onValueChange={v => setAdjustForm(f => ({ ...f, vendor_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                      <SelectContent>
+                        {vendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label>{adjustForm.type === 'stocktake' ? 'Actual Count' : 'Quantity'}</Label>
                   <Input type="number" value={adjustForm.quantity || ''} onChange={e => setAdjustForm(f => ({ ...f, quantity: parseFloat(e.target.value) || 0 }))} />
@@ -220,7 +233,7 @@ export default function Inventory() {
                           </div>
                         </div>
                         <Button size="sm" variant="outline" onClick={() => {
-                          setAdjustForm({ drink_id: item.drink_id, quantity: 0, type: 'purchase', notes: '' });
+                          setAdjustForm({ drink_id: item.drink_id, quantity: 0, type: 'purchase', notes: '', vendor_id: '' });
                           setAdjustOpen(true);
                         }}>
                           Restock

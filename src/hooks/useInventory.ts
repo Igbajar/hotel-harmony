@@ -60,7 +60,7 @@ export function useInventoryTransactions(drinkId?: string) {
 export function useAdjustStock() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { drink_id: string; quantity: number; type: 'purchase' | 'wastage' | 'adjustment' | 'stocktake'; notes?: string }) => {
+    mutationFn: async (input: { drink_id: string; quantity: number; type: 'purchase' | 'wastage' | 'adjustment' | 'stocktake'; notes?: string; vendor_id?: string }) => {
       // Get current stock
       const { data: inv, error: fetchError } = await supabase
         .from('bar_inventory')
@@ -95,7 +95,10 @@ export function useAdjustStock() {
         drink_id: input.drink_id,
         type: input.type,
         quantity: transactionQty,
-        notes: input.notes || null,
+        notes: input.vendor_id && input.type === 'purchase'
+          ? `${input.notes ? input.notes + ' | ' : ''}Vendor restock`
+          : input.notes || null,
+        reference_id: input.vendor_id || null,
       });
       if (txError) throw txError;
     },

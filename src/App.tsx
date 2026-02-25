@@ -7,6 +7,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import Dashboard from "./pages/Dashboard";
 import Rooms from "./pages/Rooms";
 import Reservations from "./pages/Reservations";
@@ -30,6 +31,7 @@ import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import InstallApp from "./pages/InstallApp";
+import SiteManagement from "./pages/SiteManagement";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,7 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
+          <ChatWidget />
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
@@ -72,6 +75,7 @@ const App = () => (
                 <Route path="/marketing" element={<Marketing />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/site-management" element={<SiteManagement />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -1,6 +1,7 @@
 import { useState, createContext, useContext } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar, MobileSidebar } from './Sidebar';
+import { Footer } from './Footer';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -28,7 +29,7 @@ export function MainLayout() {
   
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         {/* Mobile Header with Hamburger */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center px-4 gap-3">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -50,9 +51,13 @@ export function MainLayout() {
           <Sidebar />
         </div>
         
-        <main className="pt-14 lg:pt-0 lg:pl-64 transition-all duration-300">
+        <main className="pt-14 lg:pt-0 lg:pl-64 transition-all duration-300 flex-1">
           <Outlet />
         </main>
+
+        <div className="lg:pl-64">
+          <Footer />
+        </div>
       </div>
     </SidebarContext.Provider>
   );

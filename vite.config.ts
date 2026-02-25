@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -55,7 +56,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "supabase-api-cache",
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 5, // 5 minutes
+                maxAgeSeconds: 60 * 5,
               },
             },
           },
@@ -65,8 +66,12 @@ export default defineConfig(({ mode }) => ({
     }),
   ].filter(Boolean),
   resolve: {
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query", "framer-motion", "qrcode.react"],
   },
 }));

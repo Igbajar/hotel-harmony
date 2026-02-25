@@ -29,6 +29,7 @@ import Vendors from "./pages/Vendors";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import InstallApp from "./pages/InstallApp";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               {/* Public routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/online-booking" element={<OnlineBooking />} />
+              <Route path="/install" element={<InstallApp />} />
               
               {/* Protected routes */}
               <Route element={

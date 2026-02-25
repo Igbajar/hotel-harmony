@@ -1,0 +1,29 @@
+{
+  "name": "HotelPro - Hotel Management System",
+  "short_name": "HotelPro",
+  "description": "Complete hotel management solution for front desk, reservations, housekeeping, billing, and more.",
+  "theme_color": "#1a2744",
+  "background_color": "#0f1729",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

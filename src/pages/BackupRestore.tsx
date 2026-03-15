@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Download, Upload, Database, Loader2, CheckCircle2, AlertTriangle, HardDrive } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { BackupScheduleCard } from '@/components/backup/BackupScheduleCard';
+import { BackupHistoryCard } from '@/components/backup/BackupHistoryCard';
+import { useLogBackup } from '@/hooks/useBackupSchedule';
 
 const BACKUP_TABLES = [
   { key: 'rooms', label: 'Rooms', description: 'Room inventory and configurations' },
@@ -38,7 +40,7 @@ export default function BackupRestore() {
   const [selectedTables, setSelectedTables] = useState<Set<TableKey>>(new Set(BACKUP_TABLES.map(t => t.key)));
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [lastBackup, setLastBackup] = useState<string | null>(null);
+  const logBackup = useLogBackup();
 
   const toggleTable = (key: TableKey) => {
     setSelectedTables(prev => {
@@ -79,7 +81,8 @@ export default function BackupRestore() {
         total_records: Object.values(backup).reduce((sum, arr) => sum + arr.length, 0),
       };
 
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const jsonStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -87,12 +90,34 @@ export default function BackupRestore() {
       a.click();
       URL.revokeObjectURL(url);
 
-      setLastBackup(new Date().toISOString());
+      // Log backup
+      logBackup.mutate({
+        type: 'manual',
+        status: errors.length ? 'completed' : 'completed',
+        tables_included: Array.from(selectedTables),
+        record_count: exportData.total_records,
+        file_size_bytes: new Blob([jsonStr]).size,
+      });
+
+      // Create notification
+      await supabase.from('notifications').insert({
+        type: 'backup',
+        title: 'Backup Completed',
+        message: `Exported ${exportData.total_records} records from ${exportData.table_count} tables.`,
+      });
+
       toast({
         title: 'Backup complete',
         description: `Exported ${exportData.total_records} records from ${exportData.table_count} tables.${errors.length ? ` (${errors.length} errors)` : ''}`,
       });
     } catch (err) {
+      logBackup.mutate({
+        type: 'manual',
+        status: 'failed',
+        tables_included: Array.from(selectedTables),
+        record_count: 0,
+        error_message: 'Unexpected error during export',
+      });
       toast({ title: 'Export failed', description: 'An unexpected error occurred.', variant: 'destructive' });
     } finally {
       setIsExporting(false);
@@ -148,7 +173,7 @@ export default function BackupRestore() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
@@ -189,12 +214,18 @@ export default function BackupRestore() {
             <div className="flex items-center gap-3">
               <Download className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium">{lastBackup ? new Date(lastBackup).toLocaleString() : 'Never'}</p>
-                <p className="text-sm text-muted-foreground">Last Backup</p>
+                <p className="text-sm font-medium">View History Below</p>
+                <p className="text-sm text-muted-foreground">Recent Backups</p>
               </div>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Scheduled Backups & History */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <BackupScheduleCard availableTables={BACKUP_TABLES.map(t => ({ key: t.key, label: t.label }))} />
+        <BackupHistoryCard />
       </div>
 
       {/* Table Selection */}

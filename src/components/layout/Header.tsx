@@ -1,4 +1,5 @@
-import { Bell, Search, Plus, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Search, Plus, ChevronDown, ArrowLeft } from 'lucide-react';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -77,6 +77,7 @@ const App = () => (
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/site-management" element={<SiteManagement />} />
+                <Route path="/backup" element={<BackupRestore />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -297,6 +297,9 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* SMTP Settings */}
+      <SmtpSettings />
     </div>
   );
 }

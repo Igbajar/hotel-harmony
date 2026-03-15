@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_history: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_size_bytes: number | null
+          id: string
+          record_count: number
+          status: string
+          tables_included: string[]
+          type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          record_count?: number
+          status?: string
+          tables_included?: string[]
+          type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          record_count?: number
+          status?: string
+          tables_included?: string[]
+          type?: string
+        }
+        Relationships: []
+      }
       bar_categories: {
         Row: {
           created_at: string
@@ -767,6 +806,42 @@ export type Database = {
           push_notifications?: boolean | null
           sms_notifications?: boolean | null
           updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
           user_id?: string | null
         }
         Relationships: []

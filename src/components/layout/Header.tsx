@@ -1,4 +1,5 @@
-import { Bell, Search, Plus, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Search, Plus, ChevronDown, ArrowLeft } from 'lucide-react';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,35 +89,7 @@ export function Header({ title, subtitle }: HeaderProps) {
         </Button>
 
         {/* Notifications */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-destructive">
-                3
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 bg-popover border border-border shadow-lg z-50">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">New reservation</span>
-              <span className="text-sm text-muted-foreground">John Smith booked Room 201</span>
-              <span className="text-xs text-muted-foreground">2 minutes ago</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Check-out reminder</span>
-              <span className="text-sm text-muted-foreground">Room 305 checkout in 30 mins</span>
-              <span className="text-xs text-muted-foreground">15 minutes ago</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Low inventory alert</span>
-              <span className="text-sm text-muted-foreground">Towels running low</span>
-              <span className="text-xs text-muted-foreground">1 hour ago</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <NotificationCenter />
 
         {/* User Menu */}
         <DropdownMenu>

@@ -32,6 +32,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import InstallApp from "./pages/InstallApp";
 import SiteManagement from "./pages/SiteManagement";
+import BackupRestore from "./pages/BackupRestore";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/site-management" element={<SiteManagement />} />
+                <Route path="/backup" element={<BackupRestore />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -28,6 +28,7 @@ import {
   Package,
   Truck,
   PenSquare,
+  HardDrive,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -84,6 +85,7 @@ const navGroups: NavGroup[] = [
       { label: 'Online Booking', icon: Globe, path: '/online-booking' },
       { label: 'Security', icon: Shield, path: '/security', minRole: 'admin' },
       { label: 'Site Management', icon: PenSquare, path: '/site-management', minRole: 'admin' },
+      { label: 'Backup & Restore', icon: HardDrive, path: '/backup', minRole: 'admin' },
       { label: 'Mobile App', icon: Smartphone, path: '/mobile-app' },
       { label: 'Marketing', icon: Megaphone, path: '/marketing', minRole: 'manager' },
       { label: 'Reports', icon: BarChart3, path: '/reports', minRole: 'manager' },

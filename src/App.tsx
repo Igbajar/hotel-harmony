@@ -32,6 +32,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import InstallApp from "./pages/InstallApp";
 import SiteManagement from "./pages/SiteManagement";
+import BackupRestore from "./pages/BackupRestore";
 
 const queryClient = new QueryClient();
 

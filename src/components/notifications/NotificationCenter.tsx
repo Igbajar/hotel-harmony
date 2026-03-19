@@ -90,6 +90,27 @@ export function NotificationCenter() {
           </div>
         </div>
         <DropdownMenuSeparator />
+        {pushSupported && pushPermission !== 'granted' && (
+          <div className="px-4 py-2 bg-muted/50">
+            <button
+              onClick={handleEnablePush}
+              className="w-full flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <BellRing className="h-3.5 w-3.5" />
+              {pushPermission === 'denied'
+                ? 'Push notifications blocked — enable in browser settings'
+                : 'Enable browser push notifications for critical alerts'}
+            </button>
+          </div>
+        )}
+        {pushSupported && pushPermission === 'granted' && (
+          <div className="px-4 py-1.5 bg-muted/30">
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <BellRing className="h-3.5 w-3.5 text-green-500" />
+              Push notifications enabled
+            </span>
+          </div>
+        )}
         <ScrollArea className="max-h-[400px]">
           {notifications.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">

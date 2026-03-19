@@ -1,4 +1,5 @@
-import { Bell, CheckCheck, CalendarDays, LogIn, LogOut, ClipboardList, HardDrive, Info, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, CheckCheck, CalendarDays, LogIn, LogOut, ClipboardList, HardDrive, Info, Trash2, BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';

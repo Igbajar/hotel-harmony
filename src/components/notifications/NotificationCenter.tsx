@@ -39,6 +39,17 @@ export function NotificationCenter() {
   const markAllAsRead = useMarkAllAsRead();
   const clearRead = useClearNotifications();
 
+  const [pushSupported] = useState(() => typeof Notification !== 'undefined');
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+  );
+
+  const handleEnablePush = async () => {
+    if (!pushSupported) return;
+    const result = await Notification.requestPermission();
+    setPushPermission(result);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

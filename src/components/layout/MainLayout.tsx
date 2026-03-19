@@ -1,5 +1,6 @@
 import { useState, createContext, useContext } from 'react';
 import { Outlet } from 'react-router-dom';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Sidebar, MobileSidebar } from './Sidebar';
 import { Footer } from './Footer';
 import { Menu } from 'lucide-react';

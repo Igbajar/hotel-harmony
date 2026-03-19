@@ -1,4 +1,5 @@
-import { Bell, CheckCheck, CalendarDays, LogIn, LogOut, ClipboardList, HardDrive, Info, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, CheckCheck, CalendarDays, LogIn, LogOut, ClipboardList, HardDrive, Info, Trash2, BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,6 +38,17 @@ export function NotificationCenter() {
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
   const clearRead = useClearNotifications();
+
+  const [pushSupported] = useState(() => typeof Notification !== 'undefined');
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+  );
+
+  const handleEnablePush = async () => {
+    if (!pushSupported) return;
+    const result = await Notification.requestPermission();
+    setPushPermission(result);
+  };
 
   return (
     <DropdownMenu>
@@ -78,6 +90,27 @@ export function NotificationCenter() {
           </div>
         </div>
         <DropdownMenuSeparator />
+        {pushSupported && pushPermission !== 'granted' && (
+          <div className="px-4 py-2 bg-muted/50">
+            <button
+              onClick={handleEnablePush}
+              className="w-full flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <BellRing className="h-3.5 w-3.5" />
+              {pushPermission === 'denied'
+                ? 'Push notifications blocked — enable in browser settings'
+                : 'Enable browser push notifications for critical alerts'}
+            </button>
+          </div>
+        )}
+        {pushSupported && pushPermission === 'granted' && (
+          <div className="px-4 py-1.5 bg-muted/30">
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <BellRing className="h-3.5 w-3.5 text-green-500" />
+              Push notifications enabled
+            </span>
+          </div>
+        )}
         <ScrollArea className="max-h-[400px]">
           {notifications.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">

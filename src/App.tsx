@@ -33,6 +33,7 @@ import Auth from "./pages/Auth";
 import InstallApp from "./pages/InstallApp";
 import SiteManagement from "./pages/SiteManagement";
 import BackupRestore from "./pages/BackupRestore";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 

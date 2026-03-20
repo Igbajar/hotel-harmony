@@ -4,6 +4,26 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const CRITICAL_TYPES = ['reservation', 'check_in', 'check_out', 'housekeeping'];
 
+let notificationAudio: HTMLAudioElement | null = null;
+
+function getOrCreateAudio(): HTMLAudioElement {
+  if (!notificationAudio) {
+    notificationAudio = new Audio('/sounds/notification.wav');
+    notificationAudio.volume = 0.6;
+  }
+  return notificationAudio;
+}
+
+function playNotificationSound() {
+  try {
+    const audio = getOrCreateAudio();
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  } catch {
+    // Audio playback may fail without user gesture
+  }
+}
+
 function getNotificationIcon(type: string): string {
   const icons: Record<string, string> = {
     reservation: '📅',
@@ -34,6 +54,9 @@ export function usePushNotifications() {
   }, []);
 
   const showNotification = useCallback((title: string, body: string, type: string) => {
+    // Always play sound for critical alerts regardless of focus
+    playNotificationSound();
+
     if (permissionRef.current !== 'granted') return;
     if (document.hasFocus()) return; // only push when tab is not focused
 
@@ -56,11 +79,9 @@ export function usePushNotifications() {
   }, []);
 
   useEffect(() => {
-    // Auto-request on mount
     requestPermission();
   }, [requestPermission]);
 
-  // Subscribe to new notifications and trigger push
   useEffect(() => {
     const channel = supabase
       .channel('push-notifications-realtime')

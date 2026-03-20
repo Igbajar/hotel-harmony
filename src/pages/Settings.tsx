@@ -301,6 +301,9 @@ export default function Settings() {
 
       {/* SMTP Settings */}
       <SmtpSettings />
+
+      {/* Notification Preferences */}
+      <NotificationPreferences />
     </div>
   );
 }

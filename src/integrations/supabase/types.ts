@@ -810,6 +810,54 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          backup_enabled: boolean
+          check_in_enabled: boolean
+          check_out_enabled: boolean
+          created_at: string
+          email_digest_enabled: boolean
+          housekeeping_enabled: boolean
+          id: string
+          push_enabled: boolean
+          reservation_enabled: boolean
+          sound_enabled: boolean
+          system_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_enabled?: boolean
+          check_in_enabled?: boolean
+          check_out_enabled?: boolean
+          created_at?: string
+          email_digest_enabled?: boolean
+          housekeeping_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          reservation_enabled?: boolean
+          sound_enabled?: boolean
+          system_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_enabled?: boolean
+          check_in_enabled?: boolean
+          check_out_enabled?: boolean
+          created_at?: string
+          email_digest_enabled?: boolean
+          housekeeping_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          reservation_enabled?: boolean
+          sound_enabled?: boolean
+          system_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

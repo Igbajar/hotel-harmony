@@ -79,6 +79,7 @@ const App = () => (
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/site-management" element={<SiteManagement />} />
                 <Route path="/backup" element={<BackupRestore />} />
+                <Route path="/notifications" element={<Notifications />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -34,6 +34,7 @@ import InstallApp from "./pages/InstallApp";
 import SiteManagement from "./pages/SiteManagement";
 import BackupRestore from "./pages/BackupRestore";
 import Notifications from "./pages/Notifications";
+import Events from "./pages/Events";
 
 const queryClient = new QueryClient();
 

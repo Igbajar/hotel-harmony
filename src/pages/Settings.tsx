@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { RefreshCw, Save, Settings as SettingsIcon, Zap, PenLine } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { SmtpSettings } from '@/components/settings/SmtpSettings';
+import { NotificationPreferences } from '@/components/notifications/NotificationPreferences';
 
 export default function Settings() {
   const { currency, baseCurrency, customRates, rateMode, setBaseCurrency, updateCustomRate, resetRates, setRateMode, lastUpdated } = useCurrency();
